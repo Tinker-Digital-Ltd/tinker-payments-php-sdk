@@ -4,3 +4,5 @@ var/
 docs/
 .idea/
 .vscode/
+.phpunit.cache/
+var/coverage/

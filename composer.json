@@ -43,9 +43,9 @@
     "lint:md": "@php vendor/bin/phpmd",
     "lint:rector": "XDEBUG_MOD=off vendor/bin/rector process -c tools/Rector/rector.php --dry-run",
     "lint:rector-fix": "XDEBUG_MOD=off vendor/bin/rector process -c tools/Rector/rector.php",
-    "test:application": "@php bin/phpunit --testsuite=Application",
-    "test:integration": "@php bin/phpunit --testsuite=Integration",
-    "test:unit": "@php bin/phpunit --testsuite=Unit",
+    "test:application": "@php vendor/bin/phpunit --testsuite=Application",
+    "test:integration": "@php vendor/bin/phpunit --testsuite=Integration",
+    "test:unit": "@php vendor/bin/phpunit --testsuite=Unit",
     "test": [
       "@test:application",
       "@test:integration",

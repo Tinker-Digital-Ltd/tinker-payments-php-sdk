@@ -23,15 +23,16 @@ use GuzzleHttp\Psr7\HttpFactory;
 
 // Initialize the SDK
 $tinker = new TinkerPayments(
-    apiKey: 'your-api-key',
+    apiPublicKey: 'your-public-key',
+    apiSecretKey: 'your-secret-key',
     httpClient: new Client(),
     requestFactory: new HttpFactory(),
     environment: 'production' // or 'sandbox' for testing
 );
 
-// Create a transaction
+// Initiate a transaction
 try {
-    $transaction = $tinker->transactions()->create([
+    $transaction = $tinker->transactions()->initiate([
         'amount' => 1000.00,
         'currency' => 'KES',
         'customer' => [
@@ -48,9 +49,9 @@ try {
     echo "Network Error: " . $e->getMessage();
 }
 
-// Fetch a transaction
+// Query a transaction
 try {
-    $transaction = $tinker->transactions()->fetch('transaction_id');
+    $transaction = $tinker->transactions()->query('transaction_id');
     if ($transaction->isSuccessful()) {
         echo "Transaction was successful!";
     }

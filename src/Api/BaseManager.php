@@ -21,7 +21,9 @@ abstract class BaseManager
 
     protected function request(string $method, string $endpoint, array $data = []): array
     {
-        $url = $this->config->getBaseUrl().$endpoint;
+        $baseUrl = rtrim($this->config->getBaseUrl(), '/');
+        $endpoint = ltrim($endpoint, '/');
+        $url = $baseUrl.'/'.$endpoint;
         $request = $this->requestFactory->createRequest($method, $url)
             ->withHeader('Authorization', 'Bearer '.$this->config->getApiKey())
             ->withHeader('Accept', 'application/json')
@@ -41,6 +43,8 @@ abstract class BaseManager
             }
 
             return $result;
+        } catch (ApiException $e) {
+            throw $e;
         } catch (\Exception $e) {
             throw new NetworkException('Failed to communicate with Tinker API: '.$e->getMessage());
         }

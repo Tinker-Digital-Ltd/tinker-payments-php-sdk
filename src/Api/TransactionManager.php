@@ -8,14 +8,14 @@ use Tinker\Model\Transaction;
 
 class TransactionManager extends BaseManager
 {
-    public function create(array $transactionData): Transaction
+    public function initiate(array $transactionData): Transaction
     {
         $response = $this->request('POST', '/transactions', $transactionData);
 
         return new Transaction($response);
     }
 
-    public function fetch(string $transactionId): Transaction
+    public function query(string $transactionId): Transaction
     {
         $response = $this->request('GET', "/transactions/{$transactionId}");
 
