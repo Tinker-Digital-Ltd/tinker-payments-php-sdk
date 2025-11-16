@@ -26,8 +26,7 @@ $tinker = new TinkerPayments(
     apiPublicKey: 'your-public-key',
     apiSecretKey: 'your-secret-key',
     httpClient: new Client(),
-    requestFactory: new HttpFactory(),
-    environment: 'production' // or 'sandbox' for testing
+    requestFactory: new HttpFactory()
 );
 
 // Initiate a transaction

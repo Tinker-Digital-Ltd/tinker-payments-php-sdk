@@ -27,9 +27,8 @@ class TinkerPayments
         string $apiSecretKey,
         ClientInterface|null $httpClient = null,
         RequestFactoryInterface|null $requestFactory = null,
-        string|null $environment = null,
     ) {
-        $this->config = new Configuration($apiPublicKey, $apiSecretKey, $environment);
+        $this->config = new Configuration($apiPublicKey, $apiSecretKey);
         $this->httpClient = $httpClient ?? new CurlClient();
         $this->requestFactory = $requestFactory ?? new CurlRequestFactory();
     }
