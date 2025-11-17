@@ -5,7 +5,7 @@ Official PHP SDK for [Tinker Payments API](https://payments.tinker.co.ke/docs).
 ## Installation
 
 ```bash
-composer require tinker/payments
+composer require tinker/payments-php-sdk
 ```
 
 ## Requirements
