@@ -13,8 +13,8 @@ final class CallbackData
     public readonly string $reference;
     public readonly float $amount;
     public readonly string $currency;
-    public readonly string|null $paid_at;
-    public readonly string $created_at;
+    public readonly string|null $paidAt;
+    public readonly string $createdAt;
     public readonly string $channel;
 
     /**
@@ -28,8 +28,8 @@ final class CallbackData
         $this->reference = $data['reference'];
         $this->amount = (float) $data['amount'];
         $this->currency = $data['currency'];
-        $this->paid_at = $data['paid_at'] ?? null;
-        $this->created_at = $data['created_at'];
+        $this->paidAt = $data['paid_at'] ?? null;
+        $this->createdAt = $data['created_at'];
         $this->channel = $data['channel'];
     }
 
@@ -44,8 +44,8 @@ final class CallbackData
             'reference' => $this->reference,
             'amount' => $this->amount,
             'currency' => $this->currency,
-            'paid_at' => $this->paid_at,
-            'created_at' => $this->created_at,
+            'paid_at' => $this->paidAt,
+            'created_at' => $this->createdAt,
             'channel' => $this->channel,
         ];
     }

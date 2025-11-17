@@ -72,25 +72,28 @@ $tinker = new TinkerPayments(
 ```php
 use Tinker\TinkerPayments;
 use Tinker\Enum\Gateway;
+use Tinker\Model\DTO\InitiatePaymentRequest;
 
 try {
-    $transaction = $tinker->transactions()->initiate([
-        'amount' => 100.00,
-        'currency' => 'KES',
-        'gateway' => Gateway::MPESA->value,
-        'merchantReference' => 'ORDER-12345',
-        'callbackUrl' => 'https://your-app.com/payment/return',
-        'customerPhone' => '+254712345678',
-        'transactionDesc' => 'Payment for order #12345',
-        'metadata' => [
+    $initiateRequest = new InitiatePaymentRequest(
+        amount: 100.00,
+        currency: 'KES',
+        gateway: Gateway::MPESA,
+        merchantReference: 'ORDER-12345',
+        callbackUrl: 'https://your-app.com/payment/return',
+        customerPhone: '+254712345678',
+        transactionDesc: 'Payment for order #12345',
+        metadata: [
             'order_id' => '12345'
         ]
-    ]);
+    );
+
+    $transaction = $tinker->transactions()->initiate($initiateRequest);
 
     $initiationData = $transaction->getInitiationData();
-    echo "Payment reference: " . $initiationData->payment_reference;
-    if ($initiationData->authorization_url) {
-        echo "Authorization URL: " . $initiationData->authorization_url;
+    echo "Payment reference: " . $initiationData->paymentReference;
+    if ($initiationData->authorizationUrl) {
+        echo "Authorization URL: " . $initiationData->authorizationUrl;
     }
 } catch (\Tinker\Exception\ApiException $e) {
     echo "API Error: " . $e->getMessage();
@@ -106,9 +109,15 @@ try {
 ```php
 use Tinker\TinkerPayments;
 use Tinker\Enum\Gateway;
+use Tinker\Model\DTO\QueryPaymentRequest;
 
 try {
-    $transaction = $tinker->transactions()->query('TXN-abc123xyz', Gateway::MPESA);
+    $queryRequest = new QueryPaymentRequest(
+        paymentReference: 'TXN-abc123xyz',
+        gateway: Gateway::MPESA,
+    );
+
+    $transaction = $tinker->transactions()->query($queryRequest);
     
     if ($transaction->isSuccessful()) {
         $queryData = $transaction->getQueryData();

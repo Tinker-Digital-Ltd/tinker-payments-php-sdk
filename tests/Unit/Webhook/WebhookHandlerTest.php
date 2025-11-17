@@ -44,8 +44,8 @@ final class WebhookHandlerTest extends TestCase
         $this->assertSame('KES', $callbackData->currency);
         $this->assertSame(PaymentStatus::SUCCESS, $callbackData->status);
         $this->assertSame('mpesa', $callbackData->channel);
-        $this->assertSame('2024-01-15T10:30:00Z', $callbackData->paid_at);
-        $this->assertSame('2024-01-15T10:25:00Z', $callbackData->created_at);
+        $this->assertSame('2024-01-15T10:30:00Z', $callbackData->paidAt);
+        $this->assertSame('2024-01-15T10:25:00Z', $callbackData->createdAt);
         $this->assertSame(PaymentStatus::SUCCESS, $transaction->status);
     }
 

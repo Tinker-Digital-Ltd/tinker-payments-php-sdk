@@ -18,6 +18,8 @@ use Tinker\Enum\Gateway;
 use Tinker\Enum\PaymentStatus;
 use Tinker\Exception\ApiException;
 use Tinker\Exception\NetworkException;
+use Tinker\Model\DTO\InitiatePaymentRequest;
+use Tinker\Model\DTO\QueryPaymentRequest;
 use Tinker\Model\Transaction;
 
 final class TransactionManagerTest extends TestCase
@@ -45,14 +47,14 @@ final class TransactionManagerTest extends TestCase
 
     public function testInitiateCreatesTransaction(): void
     {
-        $transactionData = [
-            'amount' => 100.00,
-            'currency' => 'KES',
-            'gateway' => 'mpesa',
-            'merchantReference' => 'ORDER-12345',
-            'callbackUrl' => 'https://your-app.com/webhooks/payment',
-            'customerPhone' => '+254712345678',
-        ];
+        $initiateRequest = new InitiatePaymentRequest(
+            amount: 100.00,
+            currency: 'KES',
+            gateway: 'mpesa',
+            merchantReference: 'ORDER-12345',
+            callbackUrl: 'https://your-app.com/webhooks/payment',
+            customerPhone: '+254712345678',
+        );
 
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
@@ -84,26 +86,26 @@ final class TransactionManagerTest extends TestCase
             ->with($request)
             ->willReturn($response);
 
-        $transaction = $this->transactionManager->initiate($transactionData);
+        $transaction = $this->transactionManager->initiate($initiateRequest);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
         $initiationData = $transaction->getInitiationData();
         $this->assertNotNull($initiationData);
-        $this->assertSame('TXN-abc123xyz', $initiationData->payment_reference);
+        $this->assertSame('TXN-abc123xyz', $initiationData->paymentReference);
         $this->assertSame(PaymentStatus::PENDING, $initiationData->status);
-        $this->assertNull($initiationData->authorization_url);
+        $this->assertNull($initiationData->authorizationUrl);
         $this->assertSame(PaymentStatus::PENDING, $transaction->status);
     }
 
     public function testInitiateThrowsApiExceptionOnError(): void
     {
-        $transactionData = [
-            'amount' => 100.00,
-            'currency' => 'KES',
-            'gateway' => 'mpesa',
-            'merchantReference' => 'ORDER-12345',
-            'callbackUrl' => 'https://your-app.com/webhooks/payment',
-        ];
+        $initiateRequest = new InitiatePaymentRequest(
+            amount: 100.00,
+            currency: 'KES',
+            gateway: 'mpesa',
+            merchantReference: 'ORDER-12345',
+            callbackUrl: 'https://your-app.com/webhooks/payment',
+        );
 
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
@@ -125,13 +127,15 @@ final class TransactionManagerTest extends TestCase
         $this->expectException(ApiException::class);
         $this->expectExceptionMessage('Invalid amount');
 
-        $this->transactionManager->initiate($transactionData);
+        $this->transactionManager->initiate($initiateRequest);
     }
 
     public function testQueryFetchesTransaction(): void
     {
-        $paymentReference = 'TXN-abc123xyz';
-        $gateway = 'mpesa';
+        $queryRequest = new QueryPaymentRequest(
+            paymentReference: 'TXN-abc123xyz',
+            gateway: 'mpesa',
+        );
 
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
@@ -168,7 +172,7 @@ final class TransactionManagerTest extends TestCase
             ->with($request)
             ->willReturn($response);
 
-        $transaction = $this->transactionManager->query($paymentReference, $gateway);
+        $transaction = $this->transactionManager->query($queryRequest);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
         $queryData = $transaction->getQueryData();
@@ -179,15 +183,17 @@ final class TransactionManagerTest extends TestCase
         $this->assertSame('KES', $queryData->currency);
         $this->assertSame(PaymentStatus::SUCCESS, $queryData->status);
         $this->assertSame('mpesa', $queryData->channel);
-        $this->assertSame('2024-01-15T10:30:00Z', $queryData->paid_at);
-        $this->assertSame('2024-01-15T10:25:00Z', $queryData->created_at);
+        $this->assertSame('2024-01-15T10:30:00Z', $queryData->paidAt);
+        $this->assertSame('2024-01-15T10:25:00Z', $queryData->createdAt);
         $this->assertSame(PaymentStatus::SUCCESS, $transaction->status);
     }
 
     public function testQueryThrowsNetworkExceptionOnNetworkError(): void
     {
-        $paymentReference = 'TXN-abc123xyz';
-        $gateway = 'mpesa';
+        $queryRequest = new QueryPaymentRequest(
+            paymentReference: 'TXN-abc123xyz',
+            gateway: 'mpesa',
+        );
 
         $request = $this->createMock(RequestInterface::class);
         $bodyStream = $this->createMock(StreamInterface::class);
@@ -205,12 +211,15 @@ final class TransactionManagerTest extends TestCase
         $this->expectException(NetworkException::class);
         $this->expectExceptionMessage('Failed to communicate with Tinker API: Network error');
 
-        $this->transactionManager->query($paymentReference, $gateway);
+        $this->transactionManager->query($queryRequest);
     }
 
     public function testQueryAcceptsGatewayEnum(): void
     {
-        $paymentReference = 'TXN-abc123xyz';
+        $queryRequest = new QueryPaymentRequest(
+            paymentReference: 'TXN-abc123xyz',
+            gateway: Gateway::MPESA,
+        );
 
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
@@ -238,7 +247,7 @@ final class TransactionManagerTest extends TestCase
         $this->requestFactory->method('createRequest')->willReturn($request);
         $this->httpClient->method('sendRequest')->willReturn($response);
 
-        $transaction = $this->transactionManager->query($paymentReference, Gateway::MPESA);
+        $transaction = $this->transactionManager->query($queryRequest);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
         $queryData = $transaction->getQueryData();

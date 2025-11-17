@@ -22,9 +22,9 @@ final class TransactionTest extends TestCase
 
         $initiationData = $transaction->getInitiationData();
         $this->assertNotNull($initiationData);
-        $this->assertSame('TXN-abc123xyz', $initiationData->payment_reference);
+        $this->assertSame('TXN-abc123xyz', $initiationData->paymentReference);
         $this->assertSame(PaymentStatus::PENDING, $initiationData->status);
-        $this->assertNull($initiationData->authorization_url);
+        $this->assertNull($initiationData->authorizationUrl);
         $this->assertSame(PaymentStatus::PENDING, $transaction->status);
         $this->assertNull($transaction->getQueryData());
         $this->assertNull($transaction->getCallbackData());
@@ -42,7 +42,7 @@ final class TransactionTest extends TestCase
 
         $initiationData = $transaction->getInitiationData();
         $this->assertNotNull($initiationData);
-        $this->assertSame('https://example.com/auth', $initiationData->authorization_url);
+        $this->assertSame('https://example.com/auth', $initiationData->authorizationUrl);
     }
 
     public function testTransactionInitializesWithQueryData(): void

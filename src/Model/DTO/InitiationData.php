@@ -8,19 +8,19 @@ use Tinker\Enum\PaymentStatus;
 
 final class InitiationData
 {
-    public readonly string $payment_reference;
+    public readonly string $paymentReference;
     public readonly PaymentStatus $status;
-    public readonly string|null $authorization_url;
+    public readonly string|null $authorizationUrl;
 
     /**
      * @param array<string, mixed> $data
      */
     public function __construct(array $data)
     {
-        $this->payment_reference = $data['payment_reference'];
+        $this->paymentReference = $data['payment_reference'];
         $statusValue = $data['status'] ?? 'pending';
         $this->status = PaymentStatus::from($statusValue);
-        $this->authorization_url = $data['authorization_url'] ?? null;
+        $this->authorizationUrl = $data['authorization_url'] ?? null;
     }
 
     /**
@@ -29,9 +29,9 @@ final class InitiationData
     public function toArray(): array
     {
         return [
-            'payment_reference' => $this->payment_reference,
+            'payment_reference' => $this->paymentReference,
             'status' => $this->status->value,
-            'authorization_url' => $this->authorization_url,
+            'authorization_url' => $this->authorizationUrl,
         ];
     }
 }
