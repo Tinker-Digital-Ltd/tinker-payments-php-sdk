@@ -1,7 +1,35 @@
 {
-  "name": "tinker/payments-php-sdk",
+  "name": "tinker/payments",
   "description": "Official PHP SDK for Tinker Payments API",
   "type": "library",
+  "keywords": [
+    "tinker",
+    "payments",
+    "payment-gateway",
+    "mpesa",
+    "paystack",
+    "stripe",
+    "kenya",
+    "sdk",
+    "api"
+  ],
+  "homepage": "https://payments.tinker.co.ke",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Tinker",
+      "homepage": "https://tinker.co.ke",
+        "email": "create@tinker.co.ke"
+    },
+    {
+      "name": "Edgar Alochi",
+      "email": "edgar@tinker.co.ke"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/tinker/payments-php-sdk/issues",
+    "source": "https://github.com/tinker/payments-php-sdk"
+  },
   "require": {
     "php": "^8.1",
     "psr/http-client": "^1.0",
@@ -44,5 +72,6 @@
     "lint:rector-fix": "XDEBUG_MOD=off vendor/bin/rector process -c tools/Rector/rector.php",
     "test": "@php vendor/bin/phpunit"
   },
-  "license": "MIT"
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

@@ -6,3 +6,4 @@ docs/
 .vscode/
 .phpunit.cache/
 var/coverage/
+.php-cs-fixer.cache
