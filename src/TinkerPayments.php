@@ -6,21 +6,20 @@ namespace Tinker;
 
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
-use Tinker\Api\AccountManager;
 use Tinker\Api\TransactionManager;
-use Tinker\Api\WalletManager;
+use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
 use Tinker\Http\CurlClient;
 use Tinker\Http\RequestFactory as CurlRequestFactory;
+use Tinker\Webhook\WebhookHandler;
 
 class TinkerPayments
 {
     private readonly Configuration $config;
     private readonly ClientInterface $httpClient;
     private readonly RequestFactoryInterface $requestFactory;
+    private readonly AuthenticationManager $authManager;
     private TransactionManager|null $transactions = null;
-    private WalletManager|null $wallets = null;
-    private AccountManager|null $accounts = null;
 
     public function __construct(
         string $apiPublicKey,
@@ -31,20 +30,25 @@ class TinkerPayments
         $this->config = new Configuration($apiPublicKey, $apiSecretKey);
         $this->httpClient = $httpClient ?? new CurlClient();
         $this->requestFactory = $requestFactory ?? new CurlRequestFactory();
+        $this->authManager = new AuthenticationManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+        );
     }
 
     public function transactions(): TransactionManager
     {
-        return $this->transactions ??= new TransactionManager($this->config, $this->httpClient, $this->requestFactory);
+        return $this->transactions ??= new TransactionManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
     }
 
-    public function wallets(): WalletManager
+    public function webhooks(): WebhookHandler
     {
-        return $this->wallets ??= new WalletManager($this->config, $this->httpClient, $this->requestFactory);
-    }
-
-    public function accounts(): AccountManager
-    {
-        return $this->accounts ??= new AccountManager($this->config, $this->httpClient, $this->requestFactory);
+        return new WebhookHandler();
     }
 }

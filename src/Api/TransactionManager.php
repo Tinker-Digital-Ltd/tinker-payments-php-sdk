@@ -4,28 +4,75 @@ declare(strict_types=1);
 
 namespace Tinker\Api;
 
+use Psr\Http\Client\ClientExceptionInterface;
+use Tinker\Config\Endpoints;
+use Tinker\Enum\Gateway;
+use Tinker\Exception\ApiException;
+use Tinker\Exception\NetworkException;
 use Tinker\Model\Transaction;
 
 class TransactionManager extends BaseManager
 {
+    /**
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
     public function initiate(array $transactionData): Transaction
     {
-        $response = $this->request('POST', '/transactions', $transactionData);
+        $payload = $this->buildInitiatePayload($transactionData);
+        $response = $this->request('POST', Endpoints::PAYMENT_INITIATE_PATH, $payload);
 
         return new Transaction($response);
     }
 
-    public function query(string $transactionId): Transaction
+    private function buildInitiatePayload(array $data): array
     {
-        $response = $this->request('GET', "/transactions/{$transactionId}");
+        $gateway = $data['gateway'] instanceof Gateway
+            ? $data['gateway']->value
+            : $data['gateway'];
 
-        return new Transaction($response);
+        $payload = [
+            'amount' => $data['amount'],
+            'currency' => $data['currency'],
+            'gateway' => $gateway,
+            'merchantReference' => $data['merchantReference'],
+            'callbackUrl' => $data['callbackUrl'],
+        ];
+
+        if (isset($data['customerPhone'])) {
+            $payload['customerPhone'] = $data['customerPhone'];
+        }
+
+        if (isset($data['customerEmail'])) {
+            $payload['customerEmail'] = $data['customerEmail'];
+        }
+
+        if (isset($data['transactionDesc'])) {
+            $payload['transactionDesc'] = $data['transactionDesc'];
+        }
+
+        if (isset($data['metadata'])) {
+            $payload['metadata'] = $data['metadata'];
+        }
+
+        return $payload;
     }
 
-    public function list(array $params = []): array
+    /**
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
+    public function query(string $paymentReference, string|Gateway $gateway): Transaction
     {
-        $response = $this->request('GET', '/transactions', $params);
+        $gatewayValue = $gateway instanceof Gateway ? $gateway->value : $gateway;
+        $payload = [
+            'payment_reference' => $paymentReference,
+            'gateway' => $gatewayValue,
+        ];
+        $response = $this->request('POST', Endpoints::PAYMENT_QUERY_PATH, $payload);
 
-        return array_map(fn ($item) => new Transaction($item), $response['data']);
+        return new Transaction($response);
     }
 }

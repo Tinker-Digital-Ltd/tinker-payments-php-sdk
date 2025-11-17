@@ -12,23 +12,11 @@
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
-        <testsuite name="Integration">
-            <directory>tests/Integration</directory>
-        </testsuite>
-        <testsuite name="Application">
-            <directory>tests/Application</directory>
-        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>src</directory>
         </include>
     </source>
-    <coverage>
-        <report>
-            <html outputDirectory="var/coverage/html"/>
-            <text outputFile="var/coverage/coverage.txt"/>
-        </report>
-    </coverage>
 </phpunit>
 

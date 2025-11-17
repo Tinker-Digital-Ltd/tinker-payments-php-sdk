@@ -12,7 +12,7 @@ class Configuration
         private readonly string $apiPublicKey,
         private readonly string $apiSecretKey,
     ) {
-        $this->baseUrl = 'https://payments.tinker.co.ke/api/';
+        $this->baseUrl = Endpoints::API_BASE_URL.'/';
     }
 
     public function getApiPublicKey(): string

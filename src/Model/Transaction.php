@@ -4,31 +4,57 @@ declare(strict_types=1);
 
 namespace Tinker\Model;
 
+use Tinker\Enum\PaymentStatus;
+
 class Transaction
 {
-    public readonly string $id;
-    public readonly float $amount;
-    public readonly string $currency;
-    public readonly string $status;
-    public readonly array $metadata;
-    public readonly string $createdAt;
+    public readonly string|null $id;
+    public readonly string|null $payment_reference;
+    public readonly string|null $reference;
+    public readonly float|null $amount;
+    public readonly string|null $currency;
+    public readonly PaymentStatus $status;
+    public readonly string|null $authorization_url;
+    public readonly string|null $channel;
+    public readonly string|null $paid_at;
+    public readonly string|null $created_at;
+    public readonly string|null $createdAt;
+    public readonly array|null $metadata;
 
     public function __construct(array $data)
     {
-        foreach ($data as $key => $value) {
-            if (property_exists($this, $key)) {
-                $this->{$key} = $value;
-            }
-        }
+        $this->id = $data['id'] ?? null;
+        $this->payment_reference = $data['payment_reference'] ?? $data['reference'] ?? null;
+        $this->reference = $data['reference'] ?? null;
+        $this->amount = $data['amount'] ?? null;
+        $this->currency = $data['currency'] ?? null;
+        $statusValue = $data['status'] ?? 'pending';
+        $this->status = PaymentStatus::from($statusValue);
+        $this->authorization_url = $data['authorization_url'] ?? null;
+        $this->channel = $data['channel'] ?? null;
+        $this->paid_at = $data['paid_at'] ?? null;
+        $this->created_at = $data['created_at'] ?? null;
+        $this->createdAt = $data['createdAt'] ?? $data['created_at'] ?? null;
+        $this->metadata = $data['metadata'] ?? null;
     }
 
     public function isSuccessful(): bool
     {
-        return 'successful' === $this->status;
+        return PaymentStatus::SUCCESS === $this->status;
     }
 
     public function isPending(): bool
     {
-        return 'pending' === $this->status;
+        return PaymentStatus::PENDING === $this->status;
+    }
+
+    public function isCancelled(): bool
+    {
+        return PaymentStatus::CANCELLED === $this->status;
+    }
+
+    public function isFailed(): bool
+    {
+        return PaymentStatus::FAILED === $this->status;
     }
 }

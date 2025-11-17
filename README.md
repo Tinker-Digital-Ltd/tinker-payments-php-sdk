@@ -18,6 +18,7 @@ composer require tinker/payments
 
 ```php
 use Tinker\TinkerPayments;
+use Tinker\Enum\Gateway;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
 
@@ -29,16 +30,19 @@ $tinker = new TinkerPayments(
     requestFactory: new HttpFactory()
 );
 
-// Initiate a transaction
+// Initiate a payment
 try {
     $transaction = $tinker->transactions()->initiate([
-        'amount' => 1000.00,
+        'amount' => 100.00,
         'currency' => 'KES',
-        'customer' => [
-            'email' => 'customer@example.com',
-            'phone_number' => '+254700000000',
-        ],
-        'description' => 'Payment for order #123'
+        'gateway' => Gateway::MPESA->value,
+        'merchantReference' => 'ORDER-12345',
+        'callbackUrl' => 'https://your-app.com/webhooks/payment',
+        'customerPhone' => '+254712345678',
+        'transactionDesc' => 'Payment for order #12345',
+        'metadata' => [
+            'order_id' => '12345'
+        ]
     ]);
 
     echo "Transaction created with ID: " . $transaction->id;
@@ -50,13 +54,30 @@ try {
 
 // Query a transaction
 try {
-    $transaction = $tinker->transactions()->query('transaction_id');
+    $transaction = $tinker->transactions()->query('TXN-abc123xyz', Gateway::MPESA);
     if ($transaction->isSuccessful()) {
         echo "Transaction was successful!";
     }
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage();
 }
+
+// Handle webhook callbacks
+try {
+    $transaction = $tinker->webhooks()->handleFromRequest();
+    
+    if ($transaction->isSuccessful()) {
+        echo "Payment successful: " . $transaction->reference;
+    } elseif ($transaction->isFailed()) {
+        echo "Payment failed: " . $transaction->reference;
+    }
+} catch (\Exception $e) {
+    echo "Error processing webhook: " . $e->getMessage();
+}
+
+// Or handle webhook with custom payload
+$webhookPayload = file_get_contents('php://input');
+$transaction = $tinker->webhooks()->handle($webhookPayload);
 ```
 
 ## Documentation

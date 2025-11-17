@@ -28,7 +28,7 @@ final class TinkerPaymentsTest extends TestCase
             'pk_test_123',
             'sk_test_456',
             $httpClient,
-            $requestFactory
+            $requestFactory,
         );
 
         $this->assertInstanceOf(TinkerPayments::class, $tinker);
@@ -51,4 +51,3 @@ final class TinkerPaymentsTest extends TestCase
         $this->assertSame($transactions1, $transactions2);
     }
 }
-

@@ -25,4 +25,3 @@ final class ConfigurationTest extends TestCase
         $this->assertSame('https://payments.tinker.co.ke/api/', $config->getBaseUrl());
     }
 }
-
