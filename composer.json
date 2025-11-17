@@ -1,5 +1,5 @@
 {
-  "name": "tinker/payments",
+  "name": "tinker/payments-php-sdk",
   "description": "Official PHP SDK for Tinker Payments API",
   "type": "library",
   "keywords": [
