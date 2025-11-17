@@ -62,7 +62,7 @@ final class TransactionManagerTest extends TestCase
         $request->method('withHeader')->willReturnSelf();
         $request->method('getBody')->willReturn($bodyStream);
         $bodyStream->method('write')->willReturn(0);
-        $bodyStream->method('rewind')->willReturn(null);
+        $bodyStream->method('rewind')->willReturnCallback(function (): void {});
 
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
@@ -110,7 +110,7 @@ final class TransactionManagerTest extends TestCase
         $request->method('withHeader')->willReturnSelf();
         $request->method('getBody')->willReturn($bodyStream);
         $bodyStream->method('write')->willReturn(0);
-        $bodyStream->method('rewind')->willReturn(null);
+        $bodyStream->method('rewind')->willReturnCallback(function (): void {});
 
         $response->method('getStatusCode')->willReturn(400);
         $response->method('getBody')->willReturn($stream);
@@ -138,7 +138,7 @@ final class TransactionManagerTest extends TestCase
         $request->method('withHeader')->willReturnSelf();
         $request->method('getBody')->willReturn($bodyStream);
         $bodyStream->method('write')->willReturn(0);
-        $bodyStream->method('rewind')->willReturn(null);
+        $bodyStream->method('rewind')->willReturnCallback(function (): void {});
 
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
@@ -190,12 +190,12 @@ final class TransactionManagerTest extends TestCase
         $request->method('withHeader')->willReturnSelf();
         $request->method('getBody')->willReturn($bodyStream);
         $bodyStream->method('write')->willReturn(0);
-        $bodyStream->method('rewind')->willReturn(null);
+        $bodyStream->method('rewind')->willReturnCallback(function (): void {});
 
         $this->requestFactory->method('createRequest')->willReturn($request);
         $this->httpClient
             ->method('sendRequest')
-            ->willThrowException(new \RuntimeException('Network error'));
+            ->willThrowException(new \Exception('Network error'));
 
         $this->expectException(NetworkException::class);
         $this->expectExceptionMessage('Failed to communicate with Tinker API: Network error');
@@ -215,7 +215,7 @@ final class TransactionManagerTest extends TestCase
         $request->method('withHeader')->willReturnSelf();
         $request->method('getBody')->willReturn($bodyStream);
         $bodyStream->method('write')->willReturn(0);
-        $bodyStream->method('rewind')->willReturn(null);
+        $bodyStream->method('rewind')->willReturnCallback(function (): void {});
 
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
