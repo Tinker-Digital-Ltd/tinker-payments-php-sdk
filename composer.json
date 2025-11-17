@@ -73,5 +73,17 @@
     "test": "@php vendor/bin/phpunit"
   },
   "minimum-stability": "stable",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "archive": {
+    "exclude": [
+      "tests",
+      "tools",
+      "docs",
+      ".github",
+      ".php-cs-fixer.dist.php",
+      "phpunit.xml",
+      "phpstan.neon",
+      "rector.php"
+    ]
+  }
 }
