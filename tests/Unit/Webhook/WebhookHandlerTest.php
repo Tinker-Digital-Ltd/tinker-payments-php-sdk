@@ -36,14 +36,17 @@ final class WebhookHandlerTest extends TestCase
         $transaction = $this->webhookHandler->handle($payload);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
-        $this->assertSame('pay_abc123', $transaction->id);
-        $this->assertSame('TXN-abc123xyz', $transaction->reference);
-        $this->assertSame(100.00, $transaction->amount);
-        $this->assertSame('KES', $transaction->currency);
+        $callbackData = $transaction->getCallbackData();
+        $this->assertNotNull($callbackData);
+        $this->assertSame('pay_abc123', $callbackData->id);
+        $this->assertSame('TXN-abc123xyz', $callbackData->reference);
+        $this->assertSame(100.00, $callbackData->amount);
+        $this->assertSame('KES', $callbackData->currency);
+        $this->assertSame(PaymentStatus::SUCCESS, $callbackData->status);
+        $this->assertSame('mpesa', $callbackData->channel);
+        $this->assertSame('2024-01-15T10:30:00Z', $callbackData->paid_at);
+        $this->assertSame('2024-01-15T10:25:00Z', $callbackData->created_at);
         $this->assertSame(PaymentStatus::SUCCESS, $transaction->status);
-        $this->assertSame('mpesa', $transaction->channel);
-        $this->assertSame('2024-01-15T10:30:00Z', $transaction->paid_at);
-        $this->assertSame('2024-01-15T10:25:00Z', $transaction->created_at);
     }
 
     public function testHandleWithJsonStringPayload(): void
@@ -62,7 +65,10 @@ final class WebhookHandlerTest extends TestCase
         $transaction = $this->webhookHandler->handle($payload);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
-        $this->assertSame('pay_abc123', $transaction->id);
+        $callbackData = $transaction->getCallbackData();
+        $this->assertNotNull($callbackData);
+        $this->assertSame('pay_abc123', $callbackData->id);
+        $this->assertSame(PaymentStatus::PENDING, $callbackData->status);
         $this->assertSame(PaymentStatus::PENDING, $transaction->status);
     }
 

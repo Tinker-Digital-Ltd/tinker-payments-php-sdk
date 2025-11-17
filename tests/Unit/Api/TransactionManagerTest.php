@@ -87,9 +87,12 @@ final class TransactionManagerTest extends TestCase
         $transaction = $this->transactionManager->initiate($transactionData);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
-        $this->assertSame('TXN-abc123xyz', $transaction->payment_reference);
+        $initiationData = $transaction->getInitiationData();
+        $this->assertNotNull($initiationData);
+        $this->assertSame('TXN-abc123xyz', $initiationData->payment_reference);
+        $this->assertSame(PaymentStatus::PENDING, $initiationData->status);
+        $this->assertNull($initiationData->authorization_url);
         $this->assertSame(PaymentStatus::PENDING, $transaction->status);
-        $this->assertNull($transaction->authorization_url);
     }
 
     public function testInitiateThrowsApiExceptionOnError(): void
@@ -168,15 +171,17 @@ final class TransactionManagerTest extends TestCase
         $transaction = $this->transactionManager->query($paymentReference, $gateway);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
-        $this->assertSame('pay_abc123', $transaction->id);
-        $this->assertSame('TXN-abc123xyz', $transaction->reference);
-        $this->assertSame('TXN-abc123xyz', $transaction->payment_reference);
-        $this->assertSame(100.00, $transaction->amount);
-        $this->assertSame('KES', $transaction->currency);
+        $queryData = $transaction->getQueryData();
+        $this->assertNotNull($queryData);
+        $this->assertSame('pay_abc123', $queryData->id);
+        $this->assertSame('TXN-abc123xyz', $queryData->reference);
+        $this->assertSame(100.00, $queryData->amount);
+        $this->assertSame('KES', $queryData->currency);
+        $this->assertSame(PaymentStatus::SUCCESS, $queryData->status);
+        $this->assertSame('mpesa', $queryData->channel);
+        $this->assertSame('2024-01-15T10:30:00Z', $queryData->paid_at);
+        $this->assertSame('2024-01-15T10:25:00Z', $queryData->created_at);
         $this->assertSame(PaymentStatus::SUCCESS, $transaction->status);
-        $this->assertSame('mpesa', $transaction->channel);
-        $this->assertSame('2024-01-15T10:30:00Z', $transaction->paid_at);
-        $this->assertSame('2024-01-15T10:25:00Z', $transaction->created_at);
     }
 
     public function testQueryThrowsNetworkExceptionOnNetworkError(): void
@@ -236,6 +241,8 @@ final class TransactionManagerTest extends TestCase
         $transaction = $this->transactionManager->query($paymentReference, Gateway::MPESA);
 
         $this->assertInstanceOf(Transaction::class, $transaction);
-        $this->assertSame('pay_abc123', $transaction->id);
+        $queryData = $transaction->getQueryData();
+        $this->assertNotNull($queryData);
+        $this->assertSame('pay_abc123', $queryData->id);
     }
 }

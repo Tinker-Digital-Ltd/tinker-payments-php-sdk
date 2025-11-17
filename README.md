@@ -87,7 +87,11 @@ try {
         ]
     ]);
 
-    echo "Transaction created with ID: " . $transaction->id;
+    $initiationData = $transaction->getInitiationData();
+    echo "Payment reference: " . $initiationData->payment_reference;
+    if ($initiationData->authorization_url) {
+        echo "Authorization URL: " . $initiationData->authorization_url;
+    }
 } catch (\Tinker\Exception\ApiException $e) {
     echo "API Error: " . $e->getMessage();
 } catch (\Tinker\Exception\NetworkException $e) {
@@ -107,7 +111,9 @@ try {
     $transaction = $tinker->transactions()->query('TXN-abc123xyz', Gateway::MPESA);
     
     if ($transaction->isSuccessful()) {
-        echo "Transaction was successful!";
+        $queryData = $transaction->getQueryData();
+        echo "Transaction ID: " . $queryData->id;
+        echo "Amount: " . $queryData->amount . " " . $queryData->currency;
     }
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage();
@@ -125,9 +131,12 @@ try {
     $transaction = $tinker->webhooks()->handleFromRequest();
     
     if ($transaction->isSuccessful()) {
-        echo "Payment successful: " . $transaction->reference;
+        $callbackData = $transaction->getCallbackData();
+        echo "Payment successful: " . $callbackData->reference;
+        echo "Amount: " . $callbackData->amount . " " . $callbackData->currency;
     } elseif ($transaction->isFailed()) {
-        echo "Payment failed: " . $transaction->reference;
+        $callbackData = $transaction->getCallbackData();
+        echo "Payment failed: " . $callbackData->reference;
     }
 } catch (\Exception $e) {
     echo "Error processing webhook: " . $e->getMessage();

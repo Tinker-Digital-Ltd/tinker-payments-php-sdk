@@ -5,41 +5,58 @@ declare(strict_types=1);
 namespace Tinker\Model;
 
 use Tinker\Enum\PaymentStatus;
+use Tinker\Model\DTO\CallbackData;
+use Tinker\Model\DTO\InitiationData;
+use Tinker\Model\DTO\QueryData;
 
 class Transaction
 {
-    public readonly string|null $id;
-    public readonly string|null $payment_reference;
-    public readonly string|null $reference;
-    public readonly float|null $amount;
-    public readonly string|null $currency;
+    private readonly InitiationData|null $initiationData;
+    private readonly QueryData|null $queryData;
+    private readonly CallbackData|null $callbackData;
     public readonly PaymentStatus $status;
-    public readonly string|null $authorization_url;
-    public readonly string|null $channel;
-    public readonly string|null $paid_at;
-    public readonly string|null $created_at;
-    public readonly string|null $createdAt;
-    /** @var array<string, mixed>|null */
-    public readonly array|null $metadata;
 
     /**
      * @param array<string, mixed> $data
      */
     public function __construct(array $data)
     {
-        $this->id = $data['id'] ?? null;
-        $this->payment_reference = $data['payment_reference'] ?? $data['reference'] ?? null;
-        $this->reference = $data['reference'] ?? null;
-        $this->amount = $data['amount'] ?? null;
-        $this->currency = $data['currency'] ?? null;
-        $statusValue = $data['status'] ?? 'pending';
-        $this->status = PaymentStatus::from($statusValue);
-        $this->authorization_url = $data['authorization_url'] ?? null;
-        $this->channel = $data['channel'] ?? null;
-        $this->paid_at = $data['paid_at'] ?? null;
-        $this->created_at = $data['created_at'] ?? null;
-        $this->createdAt = $data['createdAt'] ?? $data['created_at'] ?? null;
-        $this->metadata = $data['metadata'] ?? null;
+        // Detect which type of data we have
+        if (isset($data['payment_reference']) && !isset($data['id'])) {
+            // Initiation response
+            $this->initiationData = new InitiationData($data);
+            $this->queryData = null;
+            $this->callbackData = null;
+            $this->status = $this->initiationData->status;
+        } elseif (isset($data['id']) && isset($data['reference'])) {
+            // Query or callback response (same structure)
+            $this->initiationData = null;
+            $this->queryData = new QueryData($data);
+            $this->callbackData = new CallbackData($data);
+            $this->status = $this->queryData->status;
+        } else {
+            // Fallback for edge cases
+            $this->initiationData = null;
+            $this->queryData = null;
+            $this->callbackData = null;
+            $statusValue = $data['status'] ?? 'pending';
+            $this->status = PaymentStatus::from($statusValue);
+        }
+    }
+
+    public function getInitiationData(): InitiationData|null
+    {
+        return $this->initiationData;
+    }
+
+    public function getQueryData(): QueryData|null
+    {
+        return $this->queryData;
+    }
+
+    public function getCallbackData(): CallbackData|null
+    {
+        return $this->callbackData;
     }
 
     public function isSuccessful(): bool
