@@ -8,6 +8,8 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Tinker\Exception\ClientException;
+use Tinker\Exception\ExceptionCode;
 
 final class CurlClient implements ClientInterface
 {
@@ -21,20 +23,29 @@ final class CurlClient implements ClientInterface
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
         if (!extension_loaded('curl')) {
-            throw new \RuntimeException('cURL extension is required but not loaded');
+            throw new ClientException('cURL extension is required but not loaded', ExceptionCode::CLIENT_ERROR);
         }
 
         $ch = curl_init();
+        if (false === $ch) {
+            throw new ClientException('Failed to initialize cURL', ExceptionCode::CLIENT_ERROR);
+        }
 
-        curl_setopt_array($ch, [
-            CURLOPT_URL => (string) $request->getUri(),
+        $url = (string) $request->getUri();
+        $method = $request->getMethod();
+        $httpVersion = $this->getCurlHttpVersion($request->getProtocolVersion());
+
+        /** @var array<int, mixed> $options */
+        $options = [
+            CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 5,
-            CURLOPT_HTTP_VERSION => $this->getCurlHttpVersion($request->getProtocolVersion()),
-            CURLOPT_CUSTOMREQUEST => $request->getMethod(),
-        ]);
+            CURLOPT_HTTP_VERSION => $httpVersion,
+            CURLOPT_CUSTOMREQUEST => $method,
+        ];
+        curl_setopt_array($ch, $options);
 
         $headers = [];
         foreach ($request->getHeaders() as $name => $values) {
@@ -70,7 +81,7 @@ final class CurlClient implements ClientInterface
             throw $exception;
         }
 
-        if (false === $response) {
+        if (false === $response || true === $response) {
             $exception = new class('cURL request failed', $request) extends \Exception implements NetworkExceptionInterface {
                 public function __construct(string $message, private readonly RequestInterface $request)
                 {
@@ -111,6 +122,9 @@ final class CurlClient implements ClientInterface
         };
     }
 
+    /**
+     * @return array{0: string, 1: string}
+     */
     private function splitResponse(string $response): array
     {
         $headerSize = 0;
@@ -130,6 +144,9 @@ final class CurlClient implements ClientInterface
         return [$headerString, $bodyString];
     }
 
+    /**
+     * @return array<string, array<int, string>>
+     */
     private function parseHeaders(string $headerString): array
     {
         $headers = [];

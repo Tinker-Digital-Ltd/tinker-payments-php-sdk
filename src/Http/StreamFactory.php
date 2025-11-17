@@ -6,6 +6,8 @@ namespace Tinker\Http;
 
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
+use Tinker\Exception\ExceptionCode;
+use Tinker\Exception\StreamException;
 
 final class StreamFactory implements StreamFactoryInterface
 {
@@ -18,7 +20,7 @@ final class StreamFactory implements StreamFactoryInterface
     {
         $resource = fopen($filename, $mode);
         if (false === $resource) {
-            throw new \RuntimeException("Unable to open file: {$filename}");
+            throw new StreamException("Unable to open file: {$filename}", ExceptionCode::STREAM_ERROR);
         }
 
         return new Stream($resource);

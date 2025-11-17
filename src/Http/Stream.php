@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace Tinker\Http;
 
 use Psr\Http\Message\StreamInterface;
+use Tinker\Exception\StreamException;
 
 final class Stream implements StreamInterface
 {
+    /** @var resource|null */
     private $resource;
     private string|null $content = null;
     private bool $isResource;
     private int $position = 0;
 
+    /**
+     * @param resource|string $content
+     */
     public function __construct($content = '')
     {
         if (is_resource($content)) {
@@ -66,7 +71,7 @@ final class Stream implements StreamInterface
         if ($this->isResource && is_resource($this->resource)) {
             $position = ftell($this->resource);
             if (false === $position) {
-                throw new \RuntimeException('Unable to determine stream position');
+                throw new StreamException('Unable to determine stream position');
             }
 
             return $position;
@@ -93,7 +98,7 @@ final class Stream implements StreamInterface
     {
         if ($this->isResource && is_resource($this->resource)) {
             if (0 !== fseek($this->resource, $offset, $whence)) {
-                throw new \RuntimeException('Unable to seek stream');
+                throw new StreamException('Unable to seek stream');
             }
         } else {
             $length = strlen($this->content ?? '');
@@ -101,11 +106,11 @@ final class Stream implements StreamInterface
                 SEEK_SET => $offset,
                 SEEK_CUR => $this->position + $offset,
                 SEEK_END => $length + $offset,
-                default => throw new \RuntimeException('Invalid whence value'),
+                default => throw new StreamException('Invalid whence value'),
             };
 
             if ($newPosition < 0 || $newPosition > $length) {
-                throw new \RuntimeException('Unable to seek stream: position out of range');
+                throw new StreamException('Unable to seek stream: position out of range');
             }
 
             $this->position = $newPosition;
@@ -127,7 +132,7 @@ final class Stream implements StreamInterface
         if ($this->isResource && is_resource($this->resource)) {
             $result = fwrite($this->resource, $string);
             if (false === $result) {
-                throw new \RuntimeException('Unable to write to stream');
+                throw new StreamException('Unable to write to stream');
             }
 
             return $result;
@@ -146,9 +151,12 @@ final class Stream implements StreamInterface
     public function read(int $length): string
     {
         if ($this->isResource && is_resource($this->resource)) {
+            if ($length <= 0) {
+                return '';
+            }
             $result = fread($this->resource, $length);
             if (false === $result) {
-                throw new \RuntimeException('Unable to read from stream');
+                throw new StreamException('Unable to read from stream');
             }
 
             return $result;
@@ -171,7 +179,7 @@ final class Stream implements StreamInterface
         if ($this->isResource && is_resource($this->resource)) {
             $contents = stream_get_contents($this->resource);
             if (false === $contents) {
-                throw new \RuntimeException('Unable to read stream contents');
+                throw new StreamException('Unable to read stream contents');
             }
 
             return $contents;

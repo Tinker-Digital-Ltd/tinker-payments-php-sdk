@@ -10,7 +10,9 @@ use Psr\Http\Message\StreamInterface;
 trait MessageTrait
 {
     protected string $protocol = '1.1';
+    /** @var array<string, array<int, string>> */
     protected array $headers = [];
+    /** @var array<string, string> */
     protected array $headerNames = [];
     protected StreamInterface $body;
     protected StreamFactory $streamFactory;

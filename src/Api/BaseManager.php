@@ -11,6 +11,7 @@ use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
 use Tinker\Exception\ApiException;
 use Tinker\Exception\ExceptionCode;
+use Tinker\Exception\InvalidPayloadException;
 use Tinker\Exception\NetworkException;
 
 abstract class BaseManager
@@ -24,6 +25,10 @@ abstract class BaseManager
     }
 
     /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     *
      * @throws NetworkException
      * @throws ApiException|ClientExceptionInterface
      */
@@ -42,7 +47,11 @@ abstract class BaseManager
             ->withHeader('Content-Type', 'application/json');
 
         if (!empty($data)) {
-            $request->getBody()->write(json_encode($data));
+            $json = json_encode($data);
+            if (false === $json) {
+                throw new InvalidPayloadException('Failed to encode request data: '.json_last_error_msg(), ExceptionCode::INVALID_PAYLOAD);
+            }
+            $request->getBody()->write($json);
             $request->getBody()->rewind();
         }
 

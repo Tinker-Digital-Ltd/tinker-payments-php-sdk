@@ -10,6 +10,9 @@ use Tinker\Model\Transaction;
 
 final class WebhookHandler
 {
+    /**
+     * @param string|array<string, mixed> $payload
+     */
     public function handle(string|array $payload): Transaction
     {
         if (is_string($payload)) {

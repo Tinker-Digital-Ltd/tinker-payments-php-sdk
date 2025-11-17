@@ -11,8 +11,9 @@ final class Response implements ResponseInterface
     use MessageTrait;
     private string $reasonPhrase;
 
-    public function __construct(private int $statusCode = 200, string $reasonPhrase = '')
+    public function __construct(private int $statusCode = 200, string $reasonPhrase = '', StreamFactory|null $streamFactory = null)
     {
+        $this->streamFactory = $streamFactory ?? new StreamFactory();
         $this->reasonPhrase = '' !== $reasonPhrase ? $reasonPhrase : $this->getDefaultReasonPhrase($this->statusCode);
         $this->protocol = '1.1';
         $this->headers = [];

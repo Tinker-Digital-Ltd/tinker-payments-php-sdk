@@ -19,8 +19,12 @@ class Transaction
     public readonly string|null $paid_at;
     public readonly string|null $created_at;
     public readonly string|null $createdAt;
+    /** @var array<string, mixed>|null */
     public readonly array|null $metadata;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data)
     {
         $this->id = $data['id'] ?? null;

@@ -14,6 +14,8 @@ use Tinker\Model\Transaction;
 class TransactionManager extends BaseManager
 {
     /**
+     * @param array<string, mixed> $transactionData
+     *
      * @throws NetworkException
      * @throws ApiException
      * @throws ClientExceptionInterface
@@ -26,6 +28,11 @@ class TransactionManager extends BaseManager
         return new Transaction($response);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
     private function buildInitiatePayload(array $data): array
     {
         $gateway = $data['gateway'] instanceof Gateway

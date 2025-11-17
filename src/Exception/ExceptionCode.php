@@ -11,4 +11,6 @@ final class ExceptionCode
     public const int AUTHENTICATION_ERROR = 3000;
     public const int INVALID_PAYLOAD = 4000;
     public const int WEBHOOK_ERROR = 5000;
+    public const int STREAM_ERROR = 6000;
+    public const int CLIENT_ERROR = 7000;
 }
