@@ -1,6 +1,5 @@
 {
   "name": "tinker/payments-php-sdk",
-  "version": "0.0.1",
   "description": "Official PHP SDK for Tinker Payments API",
   "type": "library",
   "require": {
