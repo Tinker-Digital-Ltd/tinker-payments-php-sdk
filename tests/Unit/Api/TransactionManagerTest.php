@@ -52,7 +52,7 @@ final class TransactionManagerTest extends TestCase
             currency: 'KES',
             gateway: 'mpesa',
             merchantReference: 'ORDER-12345',
-            callbackUrl: 'https://your-app.com/webhooks/payment',
+            returnUrl: 'https://your-app.com/payment/return',
             customerPhone: '+254712345678',
         );
 
@@ -104,7 +104,7 @@ final class TransactionManagerTest extends TestCase
             currency: 'KES',
             gateway: 'mpesa',
             merchantReference: 'ORDER-12345',
-            callbackUrl: 'https://your-app.com/webhooks/payment',
+            returnUrl: 'https://your-app.com/payment/return',
         );
 
         $request = $this->createMock(RequestInterface::class);

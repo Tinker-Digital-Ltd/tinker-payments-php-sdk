@@ -20,6 +20,7 @@ class TinkerPayments
     private readonly RequestFactoryInterface $requestFactory;
     private readonly AuthenticationManager $authManager;
     private TransactionManager|null $transactions = null;
+    private WebhookHandler|null $webhooks = null;
 
     public function __construct(
         string $apiPublicKey,
@@ -49,6 +50,6 @@ class TinkerPayments
 
     public function webhooks(): WebhookHandler
     {
-        return new WebhookHandler();
+        return $this->webhooks ??= new WebhookHandler();
     }
 }

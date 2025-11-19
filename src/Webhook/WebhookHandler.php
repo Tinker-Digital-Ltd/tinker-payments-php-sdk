@@ -13,7 +13,7 @@ final class WebhookHandler
     /**
      * @param string|array<string, mixed> $payload
      */
-    public function handle(string|array $payload): Transaction
+    public function handle(string|array $payload): WebhookEvent
     {
         if (is_string($payload)) {
             $data = json_decode($payload, true);
@@ -24,10 +24,14 @@ final class WebhookHandler
             $data = $payload;
         }
 
-        return new Transaction($data);
+        if (!is_array($data)) {
+            throw new InvalidPayloadException('Webhook payload must be an array');
+        }
+
+        return new WebhookEvent($data);
     }
 
-    public function handleFromRequest(): Transaction
+    public function handleFromRequest(): WebhookEvent
     {
         $payload = file_get_contents('php://input');
         if (false === $payload) {
@@ -35,5 +39,15 @@ final class WebhookHandler
         }
 
         return $this->handle($payload);
+    }
+
+    /**
+     * @param string|array<string, mixed> $payload
+     */
+    public function handleAsTransaction(string|array $payload): Transaction|null
+    {
+        $event = $this->handle($payload);
+
+        return $event->toTransaction();
     }
 }

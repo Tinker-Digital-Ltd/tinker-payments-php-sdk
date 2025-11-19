@@ -60,10 +60,11 @@ abstract class BaseManager
             $result = json_decode((string) $response->getBody(), true);
 
             if ($response->getStatusCode() >= 400) {
-                throw new ApiException($result['message'] ?? 'Unknown error', ExceptionCode::API_ERROR);
+                $message = $result['message'] ?? $result['error'] ?? 'Unknown error';
+                throw new ApiException($message, ExceptionCode::API_ERROR);
             }
 
-            return $result;
+            return $result ?? [];
         } catch (ApiException $e) {
             throw $e;
         } catch (\Exception $e) {

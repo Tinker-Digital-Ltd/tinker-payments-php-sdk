@@ -16,7 +16,7 @@ final class InitiatePaymentRequest
         public readonly string $currency,
         public readonly Gateway|string $gateway,
         public readonly string $merchantReference,
-        public readonly string $callbackUrl,
+        public readonly string $returnUrl,
         public readonly string|null $customerPhone = null,
         public readonly string|null $customerEmail = null,
         public readonly string|null $transactionDesc = null,
@@ -36,7 +36,7 @@ final class InitiatePaymentRequest
             'currency' => $this->currency,
             'gateway' => $gatewayValue,
             'merchantReference' => $this->merchantReference,
-            'callbackUrl' => $this->callbackUrl,
+            'returnUrl' => $this->returnUrl,
         ];
 
         if (null !== $this->customerPhone) {

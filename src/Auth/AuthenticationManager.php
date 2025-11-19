@@ -78,7 +78,7 @@ class AuthenticationManager
             $this->expiresAt = time() + $expiresIn;
 
             return $this->token;
-        } catch (ApiException $e) {
+        } catch (ApiException|NetworkException $e) {
             throw $e;
         } catch (\Exception $e) {
             throw new NetworkException('Failed to authenticate: '.$e->getMessage(), ExceptionCode::AUTHENTICATION_ERROR, $e);
