@@ -20,11 +20,11 @@ final class InvoiceEventData
      */
     public function __construct(array $data)
     {
-        $this->id = $data['id'];
-        $this->status = $data['status'];
+        $this->id = (string) ($data['invoice_id'] ?? $data['id'] ?? '');
+        $this->status = (string) ($data['status'] ?? '');
         $this->invoiceNumber = $data['invoice_number'] ?? '';
-        $this->amount = (float) $data['amount'];
-        $this->currency = $data['currency'];
+        $this->amount = (float) ($data['amount'] ?? 0);
+        $this->currency = (string) ($data['currency'] ?? '');
         $this->subscriptionId = $data['subscription_id'] ?? '';
         $this->createdAt = $data['created_at'] ?? '';
         $this->paidAt = $data['paid_at'] ?? null;
@@ -37,6 +37,7 @@ final class InvoiceEventData
     {
         return [
             'id' => $this->id,
+            'invoice_id' => $this->id,
             'status' => $this->status,
             'invoice_number' => $this->invoiceNumber,
             'amount' => $this->amount,

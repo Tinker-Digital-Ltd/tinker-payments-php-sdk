@@ -1,6 +1,6 @@
 # Tinker Payments PHP SDK
 
-Official PHP SDK for [Tinker Payments API](https://payments.tinker.co.ke/docs).
+Official PHP SDK for Tinker Payments API.
 
 ## Installation
 
@@ -25,7 +25,40 @@ $tinker = new TinkerPayments(
 );
 ```
 
+The SDK auto-selects API environment by key prefix:
+- `pk_test_` / `sk_test_` -> sandbox (`https://sandbox-api.tinkerpayments.com/v1`)
+- `pk_live_` / `sk_live_` -> production (`https://api.tinkerpayments.com/v1`)
+
+You can also override the API base URL explicitly:
+
+```php
+$tinker = new TinkerPayments(
+    apiPublicKey: 'pk_test_xxx',
+    apiSecretKey: 'sk_test_xxx',
+    baseUrl: 'http://localhost:8080/v1' // or http://localhost:8080
+);
+```
+
 ## Usage
+
+All standardized API responses follow:
+
+```json
+{
+  "success": true,
+  "data": {},
+  "meta": {
+    "request_id": "uuid",
+    "timestamp": "2026-02-11T22:52:45Z",
+    "environment": "sandbox"
+  }
+}
+```
+
+The SDK returns the `data` payload directly and exposes the latest `meta` via:
+- `transactions()->getLastMeta()`
+- `subscriptions()->getLastMeta()`
+- `getLastAuthMeta()`
 
 ### Initiate a Payment
 
@@ -78,6 +111,50 @@ if ($transaction->isSuccessful()) {
     $queryData = $transaction->getQueryData();
     echo "Amount: " . $queryData->amount . " " . $queryData->currency;
 }
+
+// Standard response metadata from backend
+$meta = $tinker->transactions()->getLastMeta();
+echo $meta?->requestId;   // e.g. UUID request_id
+echo $meta?->environment; // sandbox | production
+```
+
+### Manage Merchant Subscriptions
+
+```php
+use Tinker\Model\DTO\CreateSubscriptionPlanRequest;
+use Tinker\Model\DTO\CreateSubscriptionRequest;
+use Tinker\Model\DTO\SubscriptionCustomer;
+
+// 1) Create a plan
+$plan = $tinker->subscriptions()->createPlan(
+    new CreateSubscriptionPlanRequest(
+        name: 'Pro Monthly',
+        amount: 29.99,
+        currency: 'USD',
+        intervals: ['monthly']
+    )
+);
+
+// 2) Create a customer subscription
+$subscription = $tinker->subscriptions()->create(
+    new CreateSubscriptionRequest(
+        planId: $plan['id'],
+        gateway: 'stripe',
+        billingPeriod: 'monthly',
+        customer: new SubscriptionCustomer(
+            externalCustomerId: 'cust_001',
+            name: 'Jane Doe',
+            email: 'jane@example.com'
+        )
+    )
+);
+
+// 3) List and cancel
+$allSubscriptions = $tinker->subscriptions()->list();
+$tinker->subscriptions()->cancel($subscription['subscription_id']);
+
+// Metadata is available here too
+$meta = $tinker->subscriptions()->getLastMeta();
 ```
 
 ### Handle Webhooks
@@ -88,6 +165,11 @@ Webhooks support multiple event types: payment, subscription, invoice, and settl
 use Tinker\TinkerPayments;
 
 $event = $tinker->webhooks()->handleFromRequest();
+
+if (!$tinker->webhooks()->verifySignature($event, 'your-webhook-secret')) {
+    http_response_code(401);
+    exit('Invalid signature');
+}
 
 // Check event type
 if ($event->isPaymentEvent()) {
@@ -109,6 +191,14 @@ echo "Event type: " . $event->type;        // e.g., "payment.completed"
 echo "Event source: " . $event->source;    // e.g., "payment"
 echo "App ID: " . $event->meta->appId;
 echo "Signature: " . $event->security->signature;
+```
+
+Authentication metadata is also available after token fetch:
+
+```php
+$tinker->transactions()->query($queryRequest); // triggers auth if token not cached
+$authMeta = $tinker->getLastAuthMeta();
+echo $authMeta?->requestId;
 ```
 
 For payment events only, you can convert to a `Transaction` object:
@@ -140,7 +230,7 @@ $tinker = new TinkerPayments(
 
 ## Documentation
 
-For detailed API documentation, visit [Tinker Payments API Documentation](https://payments.tinker.co.ke/docs).
+For detailed API documentation, use your Tinker Payments frontend docs route (`/docs`).
 
 ## License
 

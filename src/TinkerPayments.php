@@ -6,11 +6,13 @@ namespace Tinker;
 
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Tinker\Api\SubscriptionManager;
 use Tinker\Api\TransactionManager;
 use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
 use Tinker\Http\CurlClient;
 use Tinker\Http\RequestFactory as CurlRequestFactory;
+use Tinker\Model\ApiMeta;
 use Tinker\Webhook\WebhookHandler;
 
 class TinkerPayments
@@ -20,6 +22,7 @@ class TinkerPayments
     private readonly RequestFactoryInterface $requestFactory;
     private readonly AuthenticationManager $authManager;
     private TransactionManager|null $transactions = null;
+    private SubscriptionManager|null $subscriptions = null;
     private WebhookHandler|null $webhooks = null;
 
     public function __construct(
@@ -27,8 +30,9 @@ class TinkerPayments
         string $apiSecretKey,
         ClientInterface|null $httpClient = null,
         RequestFactoryInterface|null $requestFactory = null,
+        string|null $baseUrl = null,
     ) {
-        $this->config = new Configuration($apiPublicKey, $apiSecretKey);
+        $this->config = new Configuration($apiPublicKey, $apiSecretKey, $baseUrl);
         $this->httpClient = $httpClient ?? new CurlClient();
         $this->requestFactory = $requestFactory ?? new CurlRequestFactory();
         $this->authManager = new AuthenticationManager(
@@ -51,5 +55,20 @@ class TinkerPayments
     public function webhooks(): WebhookHandler
     {
         return $this->webhooks ??= new WebhookHandler();
+    }
+
+    public function subscriptions(): SubscriptionManager
+    {
+        return $this->subscriptions ??= new SubscriptionManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function getLastAuthMeta(): ApiMeta|null
+    {
+        return $this->authManager->getLastMeta();
     }
 }

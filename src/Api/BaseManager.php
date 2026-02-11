@@ -13,9 +13,12 @@ use Tinker\Exception\ApiException;
 use Tinker\Exception\ExceptionCode;
 use Tinker\Exception\InvalidPayloadException;
 use Tinker\Exception\NetworkException;
+use Tinker\Model\ApiMeta;
 
 abstract class BaseManager
 {
+    protected ApiMeta|null $lastMeta = null;
+
     public function __construct(
         protected readonly Configuration $config,
         protected readonly ClientInterface $httpClient,
@@ -60,15 +63,47 @@ abstract class BaseManager
             $result = json_decode((string) $response->getBody(), true);
 
             if ($response->getStatusCode() >= 400) {
-                $message = $result['message'] ?? $result['error'] ?? 'Unknown error';
+                $message = $this->extractErrorMessage($result);
                 throw new ApiException($message, ExceptionCode::API_ERROR);
             }
 
-            return $result ?? [];
+            if (is_array($result) && array_key_exists('success', $result)) {
+                $this->lastMeta = new ApiMeta(is_array($result['meta'] ?? null) ? $result['meta'] : []);
+
+                if (false === $result['success']) {
+                    throw new ApiException($this->extractErrorMessage($result), ExceptionCode::API_ERROR);
+                }
+
+                $data = $result['data'] ?? [];
+
+                return is_array($data) ? $data : ['value' => $data];
+            }
+
+            return is_array($result) ? $result : [];
         } catch (ApiException $e) {
             throw $e;
         } catch (\Exception $e) {
             throw new NetworkException('Failed to communicate with Tinker API: '.$e->getMessage(), ExceptionCode::NETWORK_ERROR, $e);
         }
+    }
+
+    private function extractErrorMessage(mixed $result): string
+    {
+        if (is_array($result)) {
+            if (isset($result['error']) && is_array($result['error'])) {
+                return (string) ($result['error']['message'] ?? $result['error']['code'] ?? 'Unknown error');
+            }
+
+            if (isset($result['message'])) {
+                return (string) $result['message'];
+            }
+        }
+
+        return 'Unknown error';
+    }
+
+    public function getLastMeta(): ApiMeta|null
+    {
+        return $this->lastMeta;
     }
 }

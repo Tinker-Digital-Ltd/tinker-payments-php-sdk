@@ -50,4 +50,38 @@ final class WebhookHandler
 
         return $event->toTransaction();
     }
+
+    /**
+     * @param WebhookEvent|string|array<string, mixed> $payload
+     */
+    public function verifySignature(WebhookEvent|string|array $payload, string $webhookSecret): bool
+    {
+        if ('' === $webhookSecret) {
+            return false;
+        }
+
+        $event = $payload instanceof WebhookEvent ? $payload : $this->handle($payload);
+        $signature = $event->security->signature;
+        if (!str_starts_with($signature, 'sha256=')) {
+            return false;
+        }
+
+        $payloadWithoutSecurity = [
+            'id' => $event->id,
+            'type' => $event->type,
+            'source' => $event->source,
+            'timestamp' => $event->timestamp,
+            'data' => $event->rawData,
+            'meta' => $event->rawMeta,
+        ];
+
+        $encoded = json_encode($payloadWithoutSecurity);
+        if (false === $encoded) {
+            return false;
+        }
+
+        $computed = 'sha256='.hash_hmac('sha256', $encoded, $webhookSecret);
+
+        return hash_equals($signature, $computed);
+    }
 }

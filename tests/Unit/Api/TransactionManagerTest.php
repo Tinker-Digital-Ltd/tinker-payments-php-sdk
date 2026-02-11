@@ -69,9 +69,17 @@ final class TransactionManagerTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
         $stream->method('__toString')->willReturn(json_encode([
-            'payment_reference' => 'TXN-abc123xyz',
-            'status' => 'pending',
-            'authorization_url' => null,
+            'success' => true,
+            'data' => [
+                'paymentReference' => 'TXN-abc123xyz',
+                'status' => 'pending',
+                'authorizationUrl' => null,
+            ],
+            'meta' => [
+                'request_id' => 'req_123',
+                'timestamp' => '2026-02-11T22:52:45Z',
+                'environment' => 'sandbox',
+            ],
         ]));
 
         $this->requestFactory
@@ -95,6 +103,8 @@ final class TransactionManagerTest extends TestCase
         $this->assertSame(PaymentStatus::PENDING, $initiationData->status);
         $this->assertNull($initiationData->authorizationUrl);
         $this->assertSame(PaymentStatus::PENDING, $transaction->status);
+        $this->assertSame('req_123', $this->transactionManager->getLastMeta()?->requestId);
+        $this->assertSame('sandbox', $this->transactionManager->getLastMeta()?->environment);
     }
 
     public function testInitiateThrowsApiExceptionOnError(): void
@@ -119,7 +129,10 @@ final class TransactionManagerTest extends TestCase
 
         $response->method('getStatusCode')->willReturn(400);
         $response->method('getBody')->willReturn($stream);
-        $stream->method('__toString')->willReturn(json_encode(['message' => 'Invalid amount']));
+        $stream->method('__toString')->willReturn(json_encode([
+            'success' => false,
+            'error' => ['message' => 'Invalid amount'],
+        ]));
 
         $this->requestFactory->method('createRequest')->willReturn($request);
         $this->httpClient->method('sendRequest')->willReturn($response);
@@ -150,14 +163,17 @@ final class TransactionManagerTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
         $stream->method('__toString')->willReturn(json_encode([
-            'id' => 'pay_abc123',
-            'status' => 'success',
-            'reference' => 'TXN-abc123xyz',
-            'amount' => 100.00,
-            'currency' => 'KES',
-            'paid_at' => '2024-01-15T10:30:00Z',
-            'created_at' => '2024-01-15T10:25:00Z',
-            'channel' => 'mpesa',
+            'success' => true,
+            'data' => [
+                'id' => 'pay_abc123',
+                'status' => 'success',
+                'reference' => 'TXN-abc123xyz',
+                'amount' => 100.00,
+                'currency' => 'KES',
+                'paid_at' => '2024-01-15T10:30:00Z',
+                'created_at' => '2024-01-15T10:25:00Z',
+                'channel' => 'mpesa',
+            ],
         ]));
 
         $this->requestFactory
@@ -234,14 +250,17 @@ final class TransactionManagerTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
         $stream->method('__toString')->willReturn(json_encode([
-            'id' => 'pay_abc123',
-            'status' => 'success',
-            'reference' => 'TXN-abc123xyz',
-            'amount' => 100.00,
-            'currency' => 'KES',
-            'paid_at' => '2024-01-15T10:30:00Z',
-            'created_at' => '2024-01-15T10:25:00Z',
-            'channel' => 'mpesa',
+            'success' => true,
+            'data' => [
+                'id' => 'pay_abc123',
+                'status' => 'success',
+                'reference' => 'TXN-abc123xyz',
+                'amount' => 100.00,
+                'currency' => 'KES',
+                'paid_at' => '2024-01-15T10:30:00Z',
+                'created_at' => '2024-01-15T10:25:00Z',
+                'channel' => 'mpesa',
+            ],
         ]));
 
         $this->requestFactory->method('createRequest')->willReturn($request);

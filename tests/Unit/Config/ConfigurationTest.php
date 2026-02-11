@@ -22,6 +22,25 @@ final class ConfigurationTest extends TestCase
     {
         $config = new Configuration('pk_test_123', 'sk_test_456');
 
-        $this->assertSame('https://payments.tinker.co.ke/api/', $config->getBaseUrl());
+        $this->assertSame('https://sandbox-api.tinkerpayments.com/v1/', $config->getBaseUrl());
+        $this->assertSame('https://sandbox-api.tinkerpayments.com/v1/auth/token', $config->getAuthUrl());
+    }
+
+    public function testConfigurationUsesProductionForLiveKeys(): void
+    {
+        $config = new Configuration('pk_live_123', 'sk_live_456');
+
+        $this->assertSame('https://api.tinkerpayments.com/v1/', $config->getBaseUrl());
+        $this->assertSame('https://api.tinkerpayments.com/v1/auth/token', $config->getAuthUrl());
+    }
+
+    public function testConfigurationSupportsExplicitBaseUrlOverride(): void
+    {
+        $config = new Configuration('pk_test_123', 'sk_test_456', 'http://localhost:8080');
+        $configWithVersion = new Configuration('pk_test_123', 'sk_test_456', 'http://localhost:8080/v1');
+
+        $this->assertSame('http://localhost:8080/v1/', $config->getBaseUrl());
+        $this->assertSame('http://localhost:8080/v1/auth/token', $config->getAuthUrl());
+        $this->assertSame('http://localhost:8080/v1/', $configWithVersion->getBaseUrl());
     }
 }

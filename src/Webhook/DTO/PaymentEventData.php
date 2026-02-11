@@ -22,14 +22,14 @@ final class PaymentEventData
      */
     public function __construct(array $data)
     {
-        $this->id = $data['id'];
+        $this->id = (string) ($data['id'] ?? '');
         $statusValue = $data['status'] ?? 'pending';
         $this->status = PaymentStatus::from($statusValue);
-        $this->reference = $data['reference'];
-        $this->amount = (float) $data['amount'];
-        $this->currency = $data['currency'];
-        $this->channel = $data['channel'];
-        $this->createdAt = $data['created_at'];
+        $this->reference = (string) ($data['reference'] ?? '');
+        $this->amount = (float) ($data['amount'] ?? 0);
+        $this->currency = (string) ($data['currency'] ?? '');
+        $this->channel = (string) ($data['channel'] ?? '');
+        $this->createdAt = (string) ($data['created_at'] ?? '');
         $this->paidAt = $data['paid_at'] ?? null;
     }
 

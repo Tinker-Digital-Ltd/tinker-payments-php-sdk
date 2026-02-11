@@ -14,7 +14,6 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
-use Tinker\Config\Endpoints;
 use Tinker\Exception\ApiException;
 use Tinker\Exception\NetworkException;
 
@@ -54,15 +53,23 @@ final class AuthenticationManagerTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
         $stream->method('__toString')->willReturn(json_encode([
-            'token' => 'test_token_123',
-            'expires_in' => 3600,
-            'token_type' => 'Bearer',
+            'success' => true,
+            'data' => [
+                'token' => 'test_token_123',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+            ],
+            'meta' => [
+                'request_id' => 'req_auth_123',
+                'timestamp' => '2026-02-11T22:52:45Z',
+                'environment' => 'sandbox',
+            ],
         ]));
 
         $this->requestFactory
             ->expects($this->once())
             ->method('createRequest')
-            ->with('POST', Endpoints::AUTH_TOKEN_URL)
+            ->with('POST', $this->config->getAuthUrl())
             ->willReturn($request);
 
         $this->streamFactory
@@ -79,6 +86,8 @@ final class AuthenticationManagerTest extends TestCase
         $token = $this->authManager->getToken();
 
         $this->assertSame('test_token_123', $token);
+        $this->assertSame('req_auth_123', $this->authManager->getLastMeta()?->requestId);
+        $this->assertSame('sandbox', $this->authManager->getLastMeta()?->environment);
     }
 
     public function testGetTokenReturnsCachedTokenWhenValid(): void
@@ -95,9 +104,12 @@ final class AuthenticationManagerTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
         $stream->method('__toString')->willReturn(json_encode([
-            'token' => 'test_token_123',
-            'expires_in' => 3600,
-            'token_type' => 'Bearer',
+            'success' => true,
+            'data' => [
+                'token' => 'test_token_123',
+                'expires_in' => 3600,
+                'token_type' => 'Bearer',
+            ],
         ]));
 
         $this->requestFactory->method('createRequest')->willReturn($request);
@@ -131,7 +143,10 @@ final class AuthenticationManagerTest extends TestCase
         $response->method('getStatusCode')->willReturn(401);
         $response->method('getBody')->willReturn($stream);
         $stream->method('__toString')->willReturn(json_encode([
-            'message' => 'Invalid credentials',
+            'success' => false,
+            'error' => [
+                'message' => 'Invalid credentials',
+            ],
         ]));
 
         $this->requestFactory->method('createRequest')->willReturn($request);

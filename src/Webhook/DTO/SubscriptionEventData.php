@@ -9,7 +9,9 @@ final class SubscriptionEventData
     public readonly string $id;
     public readonly string $status;
     public readonly string $planId;
-    public readonly string $customerId;
+    public readonly string $accountId;
+    public readonly string|null $currentPeriodStart;
+    public readonly string|null $currentPeriodEnd;
     public readonly string $createdAt;
     public readonly string|null $cancelledAt;
     public readonly string|null $pausedAt;
@@ -20,11 +22,13 @@ final class SubscriptionEventData
      */
     public function __construct(array $data)
     {
-        $this->id = $data['id'];
-        $this->status = $data['status'];
+        $this->id = (string) ($data['subscription_id'] ?? $data['id'] ?? '');
+        $this->status = (string) ($data['status'] ?? '');
         $this->planId = $data['plan_id'] ?? '';
-        $this->customerId = $data['customer_id'] ?? '';
-        $this->createdAt = $data['created_at'] ?? '';
+        $this->accountId = $data['account_id'] ?? $data['customer_id'] ?? '';
+        $this->currentPeriodStart = $data['current_period_start'] ?? null;
+        $this->currentPeriodEnd = $data['current_period_end'] ?? null;
+        $this->createdAt = $data['created_at'] ?? $this->currentPeriodStart ?? '';
         $this->cancelledAt = $data['cancelled_at'] ?? null;
         $this->pausedAt = $data['paused_at'] ?? null;
         $this->reactivatedAt = $data['reactivated_at'] ?? null;
@@ -37,9 +41,12 @@ final class SubscriptionEventData
     {
         return [
             'id' => $this->id,
+            'subscription_id' => $this->id,
             'status' => $this->status,
             'plan_id' => $this->planId,
-            'customer_id' => $this->customerId,
+            'account_id' => $this->accountId,
+            'current_period_start' => $this->currentPeriodStart,
+            'current_period_end' => $this->currentPeriodEnd,
             'created_at' => $this->createdAt,
             'cancelled_at' => $this->cancelledAt,
             'paused_at' => $this->pausedAt,

@@ -17,10 +17,10 @@ final class InitiationData
      */
     public function __construct(array $data)
     {
-        $this->paymentReference = $data['payment_reference'];
+        $this->paymentReference = (string) ($data['paymentReference'] ?? $data['payment_reference'] ?? '');
         $statusValue = $data['status'] ?? 'pending';
         $this->status = PaymentStatus::from($statusValue);
-        $this->authorizationUrl = $data['authorization_url'] ?? null;
+        $this->authorizationUrl = $data['authorizationUrl'] ?? $data['authorization_url'] ?? null;
     }
 
     /**
@@ -29,9 +29,9 @@ final class InitiationData
     public function toArray(): array
     {
         return [
-            'payment_reference' => $this->paymentReference,
+            'paymentReference' => $this->paymentReference,
             'status' => $this->status->value,
-            'authorization_url' => $this->authorizationUrl,
+            'authorizationUrl' => $this->authorizationUrl,
         ];
     }
 }

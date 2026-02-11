@@ -6,9 +6,12 @@ namespace Tinker\Config;
 
 final class Endpoints
 {
-    public const string BASE_URL = 'https://payments.tinker.co.ke';
-    public const string API_BASE_URL = self::BASE_URL.'/api';
-    public const string AUTH_TOKEN_URL = self::BASE_URL.'/auth/token';
-    public const string PAYMENT_INITIATE_PATH = '/payment/initiate';
-    public const string PAYMENT_QUERY_PATH = '/payment/query';
+    public const string PRODUCTION_BASE_URL = 'https://api.tinkerpayments.com';
+    public const string SANDBOX_BASE_URL = 'https://sandbox-api.tinkerpayments.com';
+    public const string API_VERSION_PATH = '/v1';
+    public const string AUTH_TOKEN_PATH = '/auth/token';
+    public const string PAYMENT_INITIATE_PATH = '/merchant/payment/initiate';
+    public const string PAYMENT_QUERY_PATH = '/merchant/payment/query';
+    public const string SUBSCRIPTION_BASE_PATH = '/merchant/subscriptions';
+    public const string SUBSCRIPTION_PLANS_PATH = '/merchant/subscriptions/plans';
 }

@@ -20,6 +20,10 @@ final class WebhookEvent
     public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData $data;
     public readonly WebhookMeta $meta;
     public readonly WebhookSecurity $security;
+    /** @var array<string, mixed> */
+    public readonly array $rawData;
+    /** @var array<string, mixed> */
+    public readonly array $rawMeta;
 
     /**
      * @param array<string, mixed> $payload
@@ -30,8 +34,10 @@ final class WebhookEvent
         $this->type = $payload['type'];
         $this->source = $payload['source'];
         $this->timestamp = $payload['timestamp'];
-        $this->data = $this->createEventData($payload['data'], $this->source);
-        $this->meta = new WebhookMeta($payload['meta'] ?? []);
+        $this->rawData = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+        $this->rawMeta = is_array($payload['meta'] ?? null) ? $payload['meta'] : [];
+        $this->data = $this->createEventData($this->rawData, $this->source);
+        $this->meta = new WebhookMeta($this->rawMeta);
         $this->security = new WebhookSecurity($payload['security'] ?? []);
     }
 

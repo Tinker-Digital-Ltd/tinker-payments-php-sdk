@@ -78,11 +78,12 @@ final class WebhookHandlerTest extends TestCase
             'source' => 'subscription',
             'timestamp' => '2024-01-15T10:30:00Z',
             'data' => [
-                'id' => 'sub_abc123',
+                'subscription_id' => 'sub_abc123',
                 'status' => 'active',
                 'plan_id' => 'plan_123',
-                'customer_id' => 'cust_123',
-                'created_at' => '2024-01-15T10:25:00Z',
+                'account_id' => 'acct_123',
+                'current_period_start' => '2024-01-15T10:25:00Z',
+                'current_period_end' => '2024-02-15T10:25:00Z',
             ],
             'meta' => [
                 'version' => '1.0',
@@ -105,6 +106,7 @@ final class WebhookHandlerTest extends TestCase
         $this->assertSame('sub_abc123', $subscriptionData->id);
         $this->assertSame('active', $subscriptionData->status);
         $this->assertSame('plan_123', $subscriptionData->planId);
+        $this->assertSame('acct_123', $subscriptionData->accountId);
     }
 
     public function testHandleWithInvoiceEvent(): void
@@ -251,5 +253,60 @@ final class WebhookHandlerTest extends TestCase
         $this->expectExceptionCode(ExceptionCode::INVALID_PAYLOAD);
 
         $this->webhookHandler->handle('invalid json');
+    }
+
+    public function testVerifySignatureReturnsTrueForValidSignature(): void
+    {
+        $payload = [
+            'id' => 'evt_abc123xyz',
+            'type' => 'payment.completed',
+            'source' => 'payment',
+            'timestamp' => '2026-02-09T14:30:00Z',
+            'data' => [
+                'reference' => 'TXN-abc123xyz',
+                'status' => 'success',
+            ],
+            'meta' => [
+                'app_id' => 'app_123',
+                'version' => '1.0',
+            ],
+        ];
+
+        $secret = 'test_webhook_secret';
+        $signature = 'sha256='.hash_hmac(
+            'sha256',
+            (string) json_encode($payload),
+            $secret,
+        );
+        $payload['security'] = [
+            'signature' => $signature,
+            'algorithm' => 'HMAC-SHA256',
+        ];
+
+        $this->assertTrue($this->webhookHandler->verifySignature($payload, $secret));
+    }
+
+    public function testVerifySignatureReturnsFalseForInvalidSignature(): void
+    {
+        $payload = [
+            'id' => 'evt_abc123xyz',
+            'type' => 'payment.completed',
+            'source' => 'payment',
+            'timestamp' => '2026-02-09T14:30:00Z',
+            'data' => [
+                'reference' => 'TXN-abc123xyz',
+                'status' => 'success',
+            ],
+            'meta' => [
+                'app_id' => 'app_123',
+                'version' => '1.0',
+            ],
+            'security' => [
+                'signature' => 'sha256=invalid',
+                'algorithm' => 'HMAC-SHA256',
+            ],
+        ];
+
+        $this->assertFalse($this->webhookHandler->verifySignature($payload, 'test_webhook_secret'));
     }
 }

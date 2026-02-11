@@ -22,7 +22,7 @@ final class QueryPaymentRequest
         $gatewayValue = $this->gateway instanceof Gateway ? $this->gateway->value : $this->gateway;
 
         return [
-            'payment_reference' => $this->paymentReference,
+            'reference' => $this->paymentReference,
             'gateway' => $gatewayValue,
         ];
     }

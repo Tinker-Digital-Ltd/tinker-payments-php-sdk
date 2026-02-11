@@ -22,7 +22,7 @@ class Transaction
     public function __construct(array $data)
     {
         // Detect which type of data we have
-        if (isset($data['payment_reference']) && !isset($data['id'])) {
+        if ((isset($data['paymentReference']) || isset($data['payment_reference'])) && !isset($data['id'])) {
             // Initiation response
             $this->initiationData = new InitiationData($data);
             $this->queryData = null;

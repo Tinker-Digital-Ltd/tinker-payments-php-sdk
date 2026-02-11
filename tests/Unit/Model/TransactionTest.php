@@ -13,9 +13,9 @@ final class TransactionTest extends TestCase
     public function testTransactionInitializesWithInitiationData(): void
     {
         $data = [
-            'payment_reference' => 'TXN-abc123xyz',
+            'paymentReference' => 'TXN-abc123xyz',
             'status' => 'pending',
-            'authorization_url' => null,
+            'authorizationUrl' => null,
         ];
 
         $transaction = new Transaction($data);
@@ -33,9 +33,9 @@ final class TransactionTest extends TestCase
     public function testTransactionHandlesAuthorizationUrl(): void
     {
         $data = [
-            'payment_reference' => 'TXN-abc123xyz',
+            'paymentReference' => 'TXN-abc123xyz',
             'status' => 'pending',
-            'authorization_url' => 'https://example.com/auth',
+            'authorizationUrl' => 'https://example.com/auth',
         ];
 
         $transaction = new Transaction($data);
@@ -99,9 +99,9 @@ final class TransactionTest extends TestCase
     public function testInitiationDataToArray(): void
     {
         $data = [
-            'payment_reference' => 'TXN-abc123xyz',
+            'paymentReference' => 'TXN-abc123xyz',
             'status' => 'pending',
-            'authorization_url' => 'https://example.com/auth',
+            'authorizationUrl' => 'https://example.com/auth',
         ];
 
         $transaction = new Transaction($data);
@@ -109,9 +109,9 @@ final class TransactionTest extends TestCase
         $this->assertNotNull($initiationData);
 
         $array = $initiationData->toArray();
-        $this->assertSame('TXN-abc123xyz', $array['payment_reference']);
+        $this->assertSame('TXN-abc123xyz', $array['paymentReference']);
         $this->assertSame('pending', $array['status']);
-        $this->assertSame('https://example.com/auth', $array['authorization_url']);
+        $this->assertSame('https://example.com/auth', $array['authorizationUrl']);
     }
 
     public function testQueryDataToArray(): void
