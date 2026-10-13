@@ -246,3 +246,76 @@ legacy code/message access remain compatible.
 
 Only an explicit `not_applied` outcome confirms no mutation. A missing outcome
 remains uncertain.
+
+## Managed recurring billing
+
+Requires a Tinker server with the managed-billing, payment-method and payment-history
+endpoints enabled. Installing the SDK does not deploy or enable those endpoints.
+Existing plan-based subscription methods remain available.
+
+Checkout uses exact integer minor-unit prices (for example, `15000` means EUR 150.00),
+an explicit recurring interval (`month` or `year`), and a quantity. The SDK does not
+convert prices or apply automatic discounts. Managed responses are unwrapped API
+data objects/maps; payment history includes `items`, `snapshot`, `has_more` and
+`next_cursor`.
+
+| Method | Purpose |
+|---|---|
+| `checkout` | Create an exact-price recurring checkout |
+| `billingResource` | Read a managed billing resource |
+| `changeQuantity` | Change the current quantity |
+| `scheduleQuantity` | Schedule a quantity change |
+| `clearScheduledQuantity` | Remove a scheduled quantity change |
+| `setCancelAtRenewal` | Set cancellation at renewal; pass false to clear it |
+| `billingOperation` | Recover the durable result by idempotency key |
+| `paymentMethodPortal` | Create a short-lived hosted payment-method link |
+| `billingPaymentHistory` | Read one page of captured payments and adjustments |
+
+```php
+use Tinker\Model\DTO\ManagedCheckout;
+use Tinker\Exception\ApiException;
+
+$billing = $payments->subscriptions();
+$billing->checkout(new ManagedCheckout(
+    externalCustomerId: 'workspace-123', email: 'buyer@example.com', name: 'Buyer',
+    currency: 'EUR', unitAmount: 15000, quantity: 3, interval: 'year',
+    returnUrl: 'https://example.com/billing', idempotencyKey: 'checkout-123',
+));
+$billing->changeQuantity('resource-id', 4, 'quantity-123');
+$billing->setCancelAtRenewal('resource-id', false, 'resume-123');
+$billing->paymentMethodPortal('resource-id', 'https://example.com/billing', 'portal-123');
+$page = $billing->billingPaymentHistory('resource-id', '', 0);
+// After an uncertain command response, recover using the SAME key:
+$operation = $billing->billingOperation('quantity-123');
+// Catch ApiException and inspect $error->httpStatus, $error->outcome, etc.
+```
+
+Use integer minor-unit amounts and snapshots on a 64-bit PHP runtime. `ManagedCheckout`
+is a request DTO with `toArray()` and an integer `unitAmount` field.
+
+Use a stable, unique idempotency key for each mutation, and reuse it only with the
+same payload. After a timeout, retrieve the durable result with the operation lookup
+method. Missing or pending results do not prove a charge failed. Do not retry with a
+new key to work around an uncertain result. Only an explicit `outcome == "not_applied"`
+confirms no mutation; missing outcome remains uncertain. No automatic charge retry is
+performed by these methods.
+
+The payment-method portal updates payment details only. It cannot change quantity or
+price, and paying an overdue invoice is a separate action through its hosted invoice
+URL. Reuse the operation key after an uncertain response; use a new key to deliberately
+open a fresh session after expiry. The server checks app ownership and requires a
+managed subscription with a dedicated customer.
+
+For payment history, start with an empty cursor and zero snapshot, then retain the
+returned snapshot and pass `next_cursor` until `has_more` is false. Amounts are integer
+minor units and timestamps are UTC RFC3339. The history includes captured cash payments,
+tax-exclusive eligible amounts, successful refunds, and dispute principal withdrawals
+and reinstatements (`reverses_id` links a reinstatement to its withdrawal).
+
+Quarantine items with `reconciliation_reason`; commit a scan only after every page has
+been verified. The snapshot is an event cutoff, not an immutable provider snapshot.
+Rescan from the first page regularly and apply facts idempotently by payment/adjustment
+ID. Zero-cash invoices are omitted from items while still advancing pagination. Currency
+conversion and customer credits require explicit reconciliation; processing and dispute
+fees are excluded from eligible principal. The SDK returns these facts without applying
+credits or reconciling them automatically.
