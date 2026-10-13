@@ -7,6 +7,7 @@ namespace Tinker\Api;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
 use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
 use Tinker\Exception\ApiException;
@@ -63,15 +64,14 @@ abstract class BaseManager
             $result = json_decode((string) $response->getBody(), true);
 
             if ($response->getStatusCode() >= 400) {
-                $message = $this->extractErrorMessage($result);
-                throw new ApiException($message, ExceptionCode::API_ERROR);
+                throw $this->apiError($response, $result);
             }
 
             if (is_array($result) && array_key_exists('success', $result)) {
                 $this->lastMeta = new ApiMeta(is_array($result['meta'] ?? null) ? $result['meta'] : []);
 
                 if (false === $result['success']) {
-                    throw new ApiException($this->extractErrorMessage($result), ExceptionCode::API_ERROR);
+                    throw $this->apiError($response, $result);
                 }
 
                 $data = $result['data'] ?? [];
@@ -85,6 +85,21 @@ abstract class BaseManager
         } catch (\Exception $e) {
             throw new NetworkException('Failed to communicate with Tinker API: '.$e->getMessage(), ExceptionCode::NETWORK_ERROR, $e);
         }
+    }
+
+    private function apiError(ResponseInterface $response, mixed $result): ApiException
+    {
+        $error = is_array($result) && is_array($result['error'] ?? null) ? $result['error'] : [];
+
+        return new ApiException(
+            $this->extractErrorMessage($result),
+            httpStatus: $response->getStatusCode(),
+            errorCode: is_string($error['code'] ?? null) ? $error['code'] : null,
+            providerCode: is_string($error['provider_code'] ?? null) ? $error['provider_code'] : null,
+            requestId: (is_string($error['request_id'] ?? null) ? $error['request_id'] : null) ?: ($response->getHeaderLine('X-Request-ID') ?: null),
+            retryAfter: $response->getHeaderLine('Retry-After') ?: null,
+            outcome: is_string($error['outcome'] ?? null) ? $error['outcome'] : null,
+        );
     }
 
     private function extractErrorMessage(mixed $result): string

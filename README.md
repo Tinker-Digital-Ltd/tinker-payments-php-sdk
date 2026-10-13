@@ -235,3 +235,14 @@ For detailed API documentation, use your Tinker Payments frontend docs route (`/
 ## License
 
 MIT License
+
+## API errors
+
+API exceptions preserve `httpStatus`, `errorCode`, `providerCode`, `requestId`, `retryAfter`, and `outcome`.
+Request IDs prefer `error.request_id` over the `X-Request-ID` header. `Retry-After`
+is retained as its original header string. Non-JSON HTTP failures retain status and
+headers as API errors with an unknown outcome. Existing exception constructors and
+legacy code/message access remain compatible.
+
+Only an explicit `not_applied` outcome confirms no mutation. A missing outcome
+remains uncertain.
