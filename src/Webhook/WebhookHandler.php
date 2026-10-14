@@ -28,7 +28,9 @@ final class WebhookHandler
             throw new InvalidPayloadException('Webhook payload must be an array');
         }
 
-        return new WebhookEvent($data);
+        $original = is_string($payload) ? json_decode($payload) : null;
+
+        return new WebhookEvent($data, $original instanceof \stdClass ? $original : null);
     }
 
     public function handleFromRequest(): WebhookEvent
@@ -62,7 +64,7 @@ final class WebhookHandler
 
         $event = $payload instanceof WebhookEvent ? $payload : $this->handle($payload);
         $signature = $event->security->signature;
-        if (!str_starts_with($signature, 'sha256=')) {
+        if ('HMAC-SHA256' !== $event->security->algorithm || !str_starts_with($signature, 'sha256=')) {
             return false;
         }
 
@@ -71,17 +73,38 @@ final class WebhookHandler
             'type' => $event->type,
             'source' => $event->source,
             'timestamp' => $event->timestamp,
-            'data' => $event->rawData,
-            'meta' => $event->rawMeta,
+            'data' => $this->sortObjects($event->signatureData),
+            'meta' => $this->sortObjects($event->signatureMeta),
         ];
 
-        $encoded = json_encode($payloadWithoutSecurity);
+        $encoded = json_encode($payloadWithoutSecurity, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if (false === $encoded) {
             return false;
         }
 
+        $encoded = str_replace(['<', '>', '&'], ['\\u003c', '\\u003e', '\\u0026'], $encoded);
+
         $computed = 'sha256='.hash_hmac('sha256', $encoded, $webhookSecret);
 
         return hash_equals($signature, $computed);
+    }
+
+    /** Go encoding/json sorts map keys while preserving list order. */
+    private function sortObjects(mixed $value): mixed
+    {
+        if ($value instanceof \stdClass || (is_array($value) && !array_is_list($value))) {
+            $fields = (array) $value;
+            ksort($fields, SORT_STRING);
+            foreach ($fields as &$field) {
+                $field = $this->sortObjects($field);
+            }
+
+            return (object) $fields;
+        }
+        if (is_array($value)) {
+            return array_map($this->sortObjects(...), $value);
+        }
+
+        return $value;
     }
 }
