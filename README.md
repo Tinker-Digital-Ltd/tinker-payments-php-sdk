@@ -249,8 +249,6 @@ remains uncertain.
 
 ## Managed recurring billing
 
-Requires a Tinker server with the managed-billing, payment-method and payment-history
-endpoints enabled. Installing the SDK does not deploy or enable those endpoints.
 Existing plan-based subscription methods remain available.
 
 Checkout uses exact integer minor-unit prices (for example, `15000` means EUR 150.00),
@@ -325,3 +323,53 @@ credits or reconciling them automatically.
 The dashboard sends a signed `setup.webhook_test` event with `source: "onboarding"`, `data.message`, and setup metadata. Parse it with the webhook handler, verify its signature using the application webhook secret, then acknowledge it with HTTP 200, 202, or 204. Setup events have onboarding data and do not convert to payment transactions. Event classification alone does not authenticate a request. Invalid signatures must be rejected; no payment lookup or fulfillment is needed for a valid setup test.
 
 The signature uses HMAC-SHA256 over the JSON envelope excluding `security`, preserving envelope field order and Go JSON map ordering and escaping.
+
+## Refunds, merchant payouts and checkout cancellation
+
+A payout is a withdrawal from the merchant's available Tinker wallet balance to
+an existing verified payout account. The app owner must enable withdrawal access
+in the dashboard. SDKs cannot approve withdrawals or verify payout destinations.
+Fees are deducted from the requested amount: requesting 100 with a fee of 2
+reserves 100 and pays 98. Quote first and submit the displayed `fee_amount`.
+
+```php
+use Tinker\Model\DTO\RefundRequest;
+use Tinker\Model\DTO\PayoutRequest;
+use Tinker\Model\DTO\CancellationRequest;
+
+$refund = $tinker->transactions()->refund($paymentId, new RefundRequest('requested_by_customer', 25), 'refund-order-42');
+$history = $tinker->transactions()->refunds($paymentId);
+$methods = $tinker->payouts()->methods();
+$quote = $tinker->payouts()->quote($payoutMethodId, 100, 'KES');
+$payout = $tinker->payouts()->requestPayout(new PayoutRequest($payoutMethodId, 100, 'KES', $quote['fee_amount']), 'withdrawal-42');
+$status = $tinker->payouts()->get($payout->withdrawal->getId());
+$cancellation = $tinker->transactions()->cancelCheckout($unpaidPaymentId, new CancellationRequest('Order cancelled'), 'cancel-order-42');
+```
+
+Keep the same idempotency key when retrying the same operation after a lost
+response. A changed request with the same key is a conflict. Keys are required,
+limited to 255 UTF-8 bytes, and never generated or rotated automatically.
+Accepted refunds may be `pending_review`; payouts may be `pending_approval`.
+Only `refunded`, `paid`, or provider-confirmed `cancelled` indicate completion.
+Cancellation `outcome_unknown` requires querying/reconciliation, not blind retry.
+Subscription cancellation is a separate existing operation.
+
+Use `getRefund`, `cancellations`, `getCancellation`, and `payouts()->list()` to
+track requests. `ApiException::$details` retains structured error details, such
+as the recorded cancellation request ID for `CHECKOUT_CANCELLATION_UNSUPPORTED`
+(422), or a new quote for `WITHDRAWAL_FEE_CHANGED` (409). Unsupported cancellation
+never marks the payment cancelled. Existing administrative review screens handle
+manual refunds and withdrawals.
+
+Lifecycle wire tests use `tests/Fixtures/merchant-lifecycle.json`, copied from
+`tinker-payments-openapi/fixtures/merchant-lifecycle.json`. Set
+`TINKER_LIFECYCLE_FIXTURES` to test a different canonical fixture during coordinated
+contract changes; update the checked-in copy with the same contract release.
+
+Cancellation history returns the newest 100 requests and `has_more`; use the
+single-request lookup to track a known older request. Signed
+`checkout.cancellation.updated.v1`, `refund.updated.v1`, and
+`withdrawal.updated.v1` events contain the corresponding resource in
+`data.resource`. Their parsed data is a cancellation, refund, or payout;
+transaction conversion returns null. Verify signatures before acting on any
+event and deduplicate delivery by event ID.

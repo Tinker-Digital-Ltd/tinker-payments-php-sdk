@@ -6,6 +6,9 @@ namespace Tinker\Webhook;
 
 use Tinker\Exception\ExceptionCode;
 use Tinker\Exception\InvalidPayloadException;
+use Tinker\Model\CheckoutCancellation;
+use Tinker\Model\Payout;
+use Tinker\Model\Refund;
 use Tinker\Webhook\DTO\InvoiceEventData;
 use Tinker\Webhook\DTO\OnboardingEventData;
 use Tinker\Webhook\DTO\PaymentEventData;
@@ -18,7 +21,7 @@ final class WebhookEvent
     public readonly string $type;
     public readonly string $source;
     public readonly string $timestamp;
-    public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData $data;
+    public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CheckoutCancellation|Refund|Payout $data;
     public readonly WebhookMeta $meta;
     public readonly WebhookSecurity $security;
     /** @var array<string, mixed> */
@@ -49,8 +52,21 @@ final class WebhookEvent
     /**
      * @param array<string, mixed> $data
      */
-    private function createEventData(array $data, string $source): PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData
+    private function createEventData(array $data, string $source): PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CheckoutCancellation|Refund|Payout
     {
+        if ('payment' === $source) {
+            $resource = is_array($data['resource'] ?? null) ? $data['resource'] : [];
+            $lifecycle = match (true) {
+                str_starts_with($this->type, 'checkout.cancellation.updated.v') => new CheckoutCancellation($resource),
+                str_starts_with($this->type, 'refund.updated.v') => new Refund($resource),
+                str_starts_with($this->type, 'withdrawal.updated.v') => new Payout($resource),
+                default => null,
+            };
+            if (null !== $lifecycle) {
+                return $lifecycle;
+            }
+        }
+
         return match ($source) {
             'onboarding' => new OnboardingEventData($data),
             'payment' => new PaymentEventData($data),
@@ -75,6 +91,21 @@ final class WebhookEvent
     public function getOnboardingData(): OnboardingEventData|null
     {
         return $this->data instanceof OnboardingEventData ? $this->data : null;
+    }
+
+    public function getCancellationData(): CheckoutCancellation|null
+    {
+        return $this->data instanceof CheckoutCancellation ? $this->data : null;
+    }
+
+    public function getRefundData(): Refund|null
+    {
+        return $this->data instanceof Refund ? $this->data : null;
+    }
+
+    public function getPayoutData(): Payout|null
+    {
+        return $this->data instanceof Payout ? $this->data : null;
     }
 
     public function isPaymentEvent(): bool
