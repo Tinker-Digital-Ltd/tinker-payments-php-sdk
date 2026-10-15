@@ -6,6 +6,7 @@ namespace Tinker\Exception;
 
 class ApiException extends \Exception
 {
+    /** @param array<string, mixed> $details */
     public function __construct(
         string $message,
         int $code = ExceptionCode::API_ERROR,
@@ -17,6 +18,7 @@ class ApiException extends \Exception
         public readonly string|null $retryAfter = null,
         // Only an explicit not_applied confirms no mutation.
         public readonly string|null $outcome = null,
+        public readonly array $details = [],
     ) {
         parent::__construct($message, $code, $previous);
     }

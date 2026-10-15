@@ -29,7 +29,8 @@ abstract class BaseManager
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<string, mixed>  $data
+     * @param array<string, string> $headers
      *
      * @return array<string, mixed>
      *
@@ -40,6 +41,7 @@ abstract class BaseManager
         string $method,
         string $endpoint,
         array $data = [],
+        array $headers = [],
     ): array {
         $baseUrl = rtrim($this->config->getBaseUrl(), '/');
         $endpoint = ltrim($endpoint, '/');
@@ -49,6 +51,10 @@ abstract class BaseManager
             ->withHeader('Authorization', 'Bearer '.$token)
             ->withHeader('Accept', 'application/json')
             ->withHeader('Content-Type', 'application/json');
+
+        foreach ($headers as $name => $value) {
+            $request = $request->withHeader($name, $value);
+        }
 
         if (!empty($data)) {
             $json = json_encode($data);
@@ -87,6 +93,31 @@ abstract class BaseManager
         }
     }
 
+    /** @return array<string, string> */
+    protected function operationHeaders(string $key): array
+    {
+        $key = trim($key);
+        if ('' === $key || strlen($key) > 255 || str_contains($key, "\r") || str_contains($key, "\n")) {
+            throw new InvalidPayloadException('Idempotency key must contain 1 to 255 bytes without line breaks');
+        }
+
+        return ['Idempotency-Key' => $key];
+    }
+
+    protected function resourceId(string $id): string
+    {
+        if ('' === trim($id)) {
+            throw new InvalidPayloadException('Resource ID is required');
+        }
+
+        return rawurlencode($id);
+    }
+
+    protected function paymentPath(string $id): string
+    {
+        return '/merchant/payment/'.$this->resourceId($id);
+    }
+
     private function apiError(ResponseInterface $response, mixed $result): ApiException
     {
         $error = is_array($result) && is_array($result['error'] ?? null) ? $result['error'] : [];
@@ -99,6 +130,7 @@ abstract class BaseManager
             requestId: (is_string($error['request_id'] ?? null) ? $error['request_id'] : null) ?: ($response->getHeaderLine('X-Request-ID') ?: null),
             retryAfter: $response->getHeaderLine('Retry-After') ?: null,
             outcome: is_string($error['outcome'] ?? null) ? $error['outcome'] : null,
+            details: is_array($error['details'] ?? null) ? $error['details'] : [],
         );
     }
 
