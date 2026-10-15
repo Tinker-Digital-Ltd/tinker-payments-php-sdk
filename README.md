@@ -367,3 +367,8 @@ Lifecycle wire tests use `tests/Fixtures/merchant-lifecycle.json`, copied from
 `tinker-payments-openapi/fixtures/merchant-lifecycle.json`. Set
 `TINKER_LIFECYCLE_FIXTURES` to test a different canonical fixture during coordinated
 contract changes; update the checked-in copy with the same contract release.
+
+Cancellation history returns the newest 100 requests and `has_more`; use the
+single-request lookup to track a known older request. Signed
+`checkout.cancellation.updated.v1` events contain a cancellation resource, not
+a payment transaction. Verify signatures before acting on any event.

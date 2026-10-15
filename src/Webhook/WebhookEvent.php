@@ -6,6 +6,7 @@ namespace Tinker\Webhook;
 
 use Tinker\Exception\ExceptionCode;
 use Tinker\Exception\InvalidPayloadException;
+use Tinker\Model\CheckoutCancellation;
 use Tinker\Webhook\DTO\InvoiceEventData;
 use Tinker\Webhook\DTO\OnboardingEventData;
 use Tinker\Webhook\DTO\PaymentEventData;
@@ -18,7 +19,7 @@ final class WebhookEvent
     public readonly string $type;
     public readonly string $source;
     public readonly string $timestamp;
-    public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData $data;
+    public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CheckoutCancellation $data;
     public readonly WebhookMeta $meta;
     public readonly WebhookSecurity $security;
     /** @var array<string, mixed> */
@@ -49,8 +50,12 @@ final class WebhookEvent
     /**
      * @param array<string, mixed> $data
      */
-    private function createEventData(array $data, string $source): PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData
+    private function createEventData(array $data, string $source): PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CheckoutCancellation
     {
+        if ('payment' === $source && 'checkout.cancellation.updated.v1' === $this->type) {
+            return new CheckoutCancellation(is_array($data['cancellation'] ?? null) ? $data['cancellation'] : []);
+        }
+
         return match ($source) {
             'onboarding' => new OnboardingEventData($data),
             'payment' => new PaymentEventData($data),
@@ -75,6 +80,11 @@ final class WebhookEvent
     public function getOnboardingData(): OnboardingEventData|null
     {
         return $this->data instanceof OnboardingEventData ? $this->data : null;
+    }
+
+    public function getCancellationData(): CheckoutCancellation|null
+    {
+        return $this->data instanceof CheckoutCancellation ? $this->data : null;
     }
 
     public function isPaymentEvent(): bool
