@@ -94,6 +94,21 @@ $operation = $billing->billingOperation('quantity-123');
 Use integer minor-unit amounts and snapshots on a 64-bit PHP runtime. `ManagedCheckout`
 is a request DTO with `toArray()` and an integer `unitAmount` field.
 
+### Trials with a required payment method
+
+Set `trialDays` (1 to 30) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
+
+```php
+$billing->checkout(new ManagedCheckout(
+    externalCustomerId: 'workspace-123', email: 'buyer@example.com', name: 'Buyer',
+    currency: 'EUR', unitAmount: 15000, quantity: 3, interval: 'year',
+    returnUrl: 'https://example.com/billing', idempotencyKey: 'checkout-124',
+    trialDays: 14,
+));
+```
+
+Checkout and billing resource responses include a provider-neutral `managed_state` map: `status` (`pending`, `trialing`, `active`, `past_due`, `paused` or `canceled`), `trial_ends_at`, `current_period_end` and `cancel_at_period_end`. Read it instead of raw provider fields; grant access while `status` is `trialing` or `active` and `current_period_end` is in the future. Managed subscription webhooks carry `billing_status` and `trial_ends_at`, and `subscription.trial_will_end` arrives up to three days before the trial ends. The trial's €0 invoice sends `invoice.paid` with amount 0 and is not a payment.
+
 Use a stable key per mutation and reuse it with the same payload after a lost response. Recover through the operation lookup; missing or pending results remain uncertain. Only an explicit `outcome` of `not_applied` confirms no mutation.
 
 The payment-method portal changes payment details only; quantity, price and overdue invoice payment are separate actions. It requires an app-owned managed subscription with a dedicated customer. Reuse the operation key after a lost response and use a new key for a deliberately new session after expiry.

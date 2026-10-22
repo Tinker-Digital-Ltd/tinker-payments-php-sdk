@@ -69,6 +69,14 @@ final class ManagedBillingTest extends TestCase
         self::assertSame(['snapshot' => 123, 'next_cursor' => 'in_next', 'has_more' => true], $page);
     }
 
+    public function testTrialDaysAreSentOnlyWhenPositive(): void
+    {
+        $args = ['workspace', 'buyer@example.com', 'Buyer', 'EUR', 15000, 3, 'year', 'https://example.com/return', 'checkout-key'];
+        self::assertArrayNotHasKey('trial_days', (new ManagedCheckout(...$args))->toArray());
+        self::assertArrayNotHasKey('trial_days', (new ManagedCheckout(...$args, trialDays: 0))->toArray());
+        self::assertSame(14, (new ManagedCheckout(...$args, trialDays: 14))->toArray()['trial_days']);
+    }
+
     public function testStructuredAndUncertainFailuresPreserveMetadata(): void
     {
         foreach ([429, 200, 502] as $status) {
