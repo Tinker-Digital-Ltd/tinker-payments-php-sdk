@@ -100,6 +100,12 @@ class SubscriptionManager extends BaseManager
     }
 
     /** @return array<string, mixed> */
+    public function expireCheckout(string $id, string $key): array
+    {
+        return $this->request('POST', 'merchant/billing/checkout/'.rawurlencode($id).'/expire', ['idempotency_key' => $key]);
+    }
+
+    /** @return array<string, mixed> */
     public function billingResource(string $id): array
     {
         return $this->request('GET', $this->billingResourcePath($id));

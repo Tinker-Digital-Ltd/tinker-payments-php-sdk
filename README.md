@@ -65,6 +65,7 @@ Checkout uses exact integer minor-unit prices (`15000` = EUR 150.00), a `month` 
 | Method | Purpose |
 |---|---|
 | `checkout` | Create an exact-price recurring checkout |
+| `expireCheckout` | Expire an abandoned, unpaid checkout |
 | `billingResource` | Read a managed billing resource |
 | `changeQuantity` | Change the current quantity |
 | `scheduleQuantity` | Schedule a quantity change |
@@ -95,6 +96,20 @@ $operation = $billing->billingOperation('quantity-123');
 
 Use integer minor-unit amounts and snapshots on a 64-bit PHP runtime. `ManagedCheckout`
 is a request DTO with `toArray()` and an integer `unitAmount` field.
+
+### Expiring an abandoned checkout
+
+An abandoned checkout link can still be completed later and create a second subscription. Expire it to close the link.
+
+```php
+$billing->expireCheckout('checkout-id', 'expire-123');
+```
+
+- `open` checkout: becomes `expired` (`managed_state.status` is `canceled`) and the session is returned.
+- Already `expired`: the session is returned unchanged, so retrying is safe.
+- `complete`, including completion while the call is in flight: HTTP 409 `CHECKOUT_COMPLETED` with `outcome: not_applied`. Read the checkout with `billingResource` and use its subscription.
+
+A non-checkout ID (`sub_...`) returns 400 `INVALID_ID`. An expired checkout sends no `subscription.cancelled` webhook.
 
 ### Trials with a required payment method
 
