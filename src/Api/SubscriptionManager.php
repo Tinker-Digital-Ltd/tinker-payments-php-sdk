@@ -129,6 +129,18 @@ class SubscriptionManager extends BaseManager
         return $this->request('POST', $this->billingResourcePath($id).'/cancel', ['cancel' => $cancel, 'idempotency_key' => $key]);
     }
 
+    /** @return array<string, mixed> */
+    public function setTrialEnd(string $id, \DateTimeInterface $end, string $key): array
+    {
+        return $this->request('POST', $this->billingResourcePath($id).'/trial-end', ['trial_end' => $end->getTimestamp(), 'idempotency_key' => $key]);
+    }
+
+    /** @return array<string, mixed> */
+    public function endTrial(string $id, string $key): array
+    {
+        return $this->request('POST', $this->billingResourcePath($id).'/end-trial', ['idempotency_key' => $key]);
+    }
+
     /**
      * Recover a durable result without replaying a provider charge.
      *

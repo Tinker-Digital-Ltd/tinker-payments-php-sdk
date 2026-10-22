@@ -43,6 +43,8 @@ final class ManagedBillingTest extends TestCase
         $m->scheduleQuantity('sub/a b', 2, 'schedule-key');
         $m->clearScheduledQuantity('sub/a b', 'clear-key');
         $m->setCancelAtRenewal('sub/a b', false, 'resume-key');
+        $m->setTrialEnd('sub/a b', new \DateTimeImmutable('@1900000000'), 'trial-key');
+        $m->endTrial('sub/a b', 'end-key');
         $m->billingOperation('key/a b');
         $m->paymentMethodPortal('sub/a b', 'https://example.com/return', 'portal-key');
         $page = $m->billingPaymentHistory('sub/a b', 'in/a &b', 123);
@@ -55,6 +57,8 @@ final class ManagedBillingTest extends TestCase
             ['POST', $base.'/schedule', ['quantity' => 2, 'idempotency_key' => 'schedule-key']],
             ['POST', $base.'/unschedule', ['idempotency_key' => 'clear-key']],
             ['POST', $base.'/cancel', ['cancel' => false, 'idempotency_key' => 'resume-key']],
+            ['POST', $base.'/trial-end', ['trial_end' => 1900000000, 'idempotency_key' => 'trial-key']],
+            ['POST', $base.'/end-trial', ['idempotency_key' => 'end-key']],
             ['GET', 'merchant/billing/operations/key%2Fa%20b', null],
             ['POST', $base.'/payment-method', ['return_url' => 'https://example.com/return', 'idempotency_key' => 'portal-key']],
             ['GET', $base.'/payment-history?starting_after=in%2Fa%20%26b&snapshot=123', null],
@@ -75,6 +79,13 @@ final class ManagedBillingTest extends TestCase
         self::assertArrayNotHasKey('trial_days', (new ManagedCheckout(...$args))->toArray());
         self::assertArrayNotHasKey('trial_days', (new ManagedCheckout(...$args, trialDays: 0))->toArray());
         self::assertSame(14, (new ManagedCheckout(...$args, trialDays: 14))->toArray()['trial_days']);
+    }
+
+    public function testTrialEndIsSentOnlyWhenSet(): void
+    {
+        $args = ['workspace', 'buyer@example.com', 'Buyer', 'EUR', 15000, 3, 'year', 'https://example.com/return', 'checkout-key'];
+        self::assertArrayNotHasKey('trial_end', (new ManagedCheckout(...$args))->toArray());
+        self::assertSame(1900000000, (new ManagedCheckout(...$args, trialEnd: new \DateTimeImmutable('@1900000000')))->toArray()['trial_end']);
     }
 
     public function testStructuredAndUncertainFailuresPreserveMetadata(): void

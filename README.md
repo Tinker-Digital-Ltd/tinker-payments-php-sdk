@@ -70,6 +70,8 @@ Checkout uses exact integer minor-unit prices (`15000` = EUR 150.00), a `month` 
 | `scheduleQuantity` | Schedule a quantity change |
 | `clearScheduledQuantity` | Remove a scheduled quantity change |
 | `setCancelAtRenewal` | Set cancellation at renewal; pass false to clear it |
+| `setTrialEnd` | Move the next charge to a given time |
+| `endTrial` | End a trial now and charge the full period |
 | `billingOperation` | Recover the durable result by idempotency key |
 | `paymentMethodPortal` | Create a short-lived hosted payment-method link |
 | `billingPaymentHistory` | Read one page of captured payments and adjustments |
@@ -96,7 +98,7 @@ is a request DTO with `toArray()` and an integer `unitAmount` field.
 
 ### Trials with a required payment method
 
-Set `trialDays` (1 to 30) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
+Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility. Alternatively set `trialEnd` to an exact end 48 hours to 730 days ahead; it cannot be combined with `trialDays` (HTTP 400), and the SDK sends it only when set.
 
 ```php
 $billing->checkout(new ManagedCheckout(
@@ -106,6 +108,15 @@ $billing->checkout(new ManagedCheckout(
     trialDays: 14,
 ));
 ```
+
+### Changing the trial end
+
+```php
+$billing->setTrialEnd('resource-id', new DateTimeImmutable('+30 days'), 'trial-end-123');
+$billing->endTrial('resource-id', 'end-trial-123');
+```
+
+`setTrialEnd` moves the next charge to a given time 1 hour to 730 days ahead. On a trialing subscription it moves the trial end earlier or later; on a paid (`active`) subscription only to a time on or after `current_period_end`, which makes it `trialing` without charging. Scheduled seat changes must be cleared first. `endTrial` ends a trial now and charges the full period immediately; if the charge fails the subscription becomes `past_due`. Both return the subscription with `managed_state`; state-dependent rejections arrive as 502 `BILLING_GATEWAY_ERROR` with `outcome: not_applied`. Ending a trial early sends `invoice.paid` and `payment.updated` (not `subscription.renewed`); extending a paid subscription produces a €0 `invoice.paid`.
 
 Checkout and billing resource responses include a provider-neutral `managed_state` map: `status` (`pending`, `trialing`, `active`, `past_due`, `paused` or `canceled`), `trial_ends_at`, `current_period_end` and `cancel_at_period_end`. Read it instead of raw provider fields; grant access while `status` is `trialing` or `active` and `current_period_end` is in the future. Managed subscription webhooks carry `billing_status` and `trial_ends_at`, and `subscription.trial_will_end` arrives up to three days before the trial ends. The trial's €0 invoice sends `invoice.paid` with amount 0 and is not a payment.
 

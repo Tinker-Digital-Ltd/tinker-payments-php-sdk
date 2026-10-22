@@ -18,6 +18,7 @@ final class ManagedCheckout
         public readonly string $returnUrl,
         public readonly string $idempotencyKey,
         public readonly int $trialDays = 0,
+        public readonly \DateTimeInterface|null $trialEnd = null,
     ) {
     }
 
@@ -37,6 +38,9 @@ final class ManagedCheckout
         ];
         if ($this->trialDays > 0) {
             $payload['trial_days'] = $this->trialDays;
+        }
+        if (null !== $this->trialEnd) {
+            $payload['trial_end'] = $this->trialEnd->getTimestamp();
         }
 
         return $payload;
