@@ -17,13 +17,14 @@ final class ManagedCheckout
         public readonly string $interval,
         public readonly string $returnUrl,
         public readonly string $idempotencyKey,
+        public readonly int $trialDays = 0,
     ) {
     }
 
     /** @return array<string, mixed> */
     public function toArray(): array
     {
-        return [
+        $payload = [
             'external_customer_id' => $this->externalCustomerId,
             'email' => $this->email,
             'name' => $this->name,
@@ -34,5 +35,10 @@ final class ManagedCheckout
             'return_url' => $this->returnUrl,
             'idempotency_key' => $this->idempotencyKey,
         ];
+        if ($this->trialDays > 0) {
+            $payload['trial_days'] = $this->trialDays;
+        }
+
+        return $payload;
     }
 }
