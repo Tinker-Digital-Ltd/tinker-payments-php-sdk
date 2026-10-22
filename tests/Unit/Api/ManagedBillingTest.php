@@ -38,6 +38,7 @@ final class ManagedBillingTest extends TestCase
             'return_url' => 'https://example.com/return', 'idempotency_key' => 'checkout-key',
         ], $checkout->toArray());
         $m->checkout($checkout);
+        $m->expireCheckout('cs/a b', 'expire-key');
         $m->billingResource('sub/a b');
         $m->changeQuantity('sub/a b', 4, 'change-key');
         $m->scheduleQuantity('sub/a b', 2, 'schedule-key');
@@ -52,6 +53,7 @@ final class ManagedBillingTest extends TestCase
         $base = 'merchant/billing/resources/sub%2Fa%20b';
         $expected = [
             ['POST', 'merchant/billing/checkout', $checkout->toArray()],
+            ['POST', 'merchant/billing/checkout/cs%2Fa%20b/expire', ['idempotency_key' => 'expire-key']],
             ['GET', $base, null],
             ['POST', $base.'/quantity', ['quantity' => 4, 'idempotency_key' => 'change-key']],
             ['POST', $base.'/schedule', ['quantity' => 2, 'idempotency_key' => 'schedule-key']],
