@@ -11,6 +11,8 @@ final class InitiationData
     public readonly string $paymentReference;
     public readonly PaymentStatus $status;
     public readonly string|null $authorizationUrl;
+    public readonly string|null $clientSecret;
+    public readonly string|null $publishableKey;
 
     /**
      * @param array<string, mixed> $data
@@ -21,6 +23,8 @@ final class InitiationData
         $statusValue = $data['status'] ?? 'pending';
         $this->status = PaymentStatus::from($statusValue);
         $this->authorizationUrl = $data['authorizationUrl'] ?? $data['authorization_url'] ?? null;
+        $this->clientSecret = $data['clientSecret'] ?? $data['client_secret'] ?? null;
+        $this->publishableKey = $data['publishableKey'] ?? $data['publishable_key'] ?? null;
     }
 
     /**
@@ -32,6 +36,8 @@ final class InitiationData
             'paymentReference' => $this->paymentReference,
             'status' => $this->status->value,
             'authorizationUrl' => $this->authorizationUrl,
+            'clientSecret' => $this->clientSecret,
+            'publishableKey' => $this->publishableKey,
         ];
     }
 }

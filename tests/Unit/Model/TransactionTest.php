@@ -45,6 +45,22 @@ final class TransactionTest extends TestCase
         $this->assertSame('https://example.com/auth', $initiationData->authorizationUrl);
     }
 
+    public function testTransactionHandlesWalletCredentials(): void
+    {
+        $transaction = new Transaction([
+            'paymentReference' => 'pi_123',
+            'status' => 'pending',
+            'authorizationUrl' => null,
+            'clientSecret' => 'pi_123_secret_abc',
+            'publishableKey' => 'pk_test_abc',
+        ]);
+
+        $initiationData = $transaction->getInitiationData();
+        $this->assertNotNull($initiationData);
+        $this->assertSame('pi_123_secret_abc', $initiationData->clientSecret);
+        $this->assertSame('pk_test_abc', $initiationData->publishableKey);
+    }
+
     public function testTransactionInitializesWithQueryData(): void
     {
         $data = [

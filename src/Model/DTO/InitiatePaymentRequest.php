@@ -21,6 +21,7 @@ final class InitiatePaymentRequest
         public readonly string|null $customerEmail = null,
         public readonly string|null $transactionDesc = null,
         public readonly array|null $metadata = null,
+        public readonly string|null $paymentMethod = null,
     ) {
     }
 
@@ -53,6 +54,10 @@ final class InitiatePaymentRequest
 
         if (null !== $this->metadata) {
             $payload['metadata'] = $this->metadata;
+        }
+
+        if (null !== $this->paymentMethod) {
+            $payload['paymentMethod'] = $this->paymentMethod;
         }
 
         return $payload;
