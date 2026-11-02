@@ -52,6 +52,7 @@ $data = $payment->getInitiationData();
 
 ```html
 <div id="wallet"></div>
+<p id="wallet-error" role="alert"></p>
 <script src="https://js.stripe.com/v3/"></script>
 <script type="module">
   const { clientSecret, publishableKey } = await fetch("/checkout/wallet", { method: "POST" }).then((r) => r.json());
@@ -59,14 +60,17 @@ $data = $payment->getInitiationData();
   const elements = stripe.elements({ clientSecret });
   const wallet = elements.create("expressCheckout", { paymentMethods: { applePay: "always", googlePay: "always" } });
   wallet.mount("#wallet");
-  wallet.on("confirm", async () => {
+  wallet.on("confirm", async (event) => {
     const { error } = await stripe.confirmPayment({ elements, clientSecret, redirect: "if_required", confirmParams: { return_url: location.href } });
-    if (error) console.error(error.message);
+    if (error) {
+      event.paymentFailed({ reason: "fail" });
+      document.querySelector("#wallet-error").textContent = error.message;
+    }
   });
 </script>
 ```
 
-The result arrives through `payment.*` webhooks. Apple Pay on the web needs the checkout domain registered with Stripe.
+The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
 ## Plan subscriptions
 
