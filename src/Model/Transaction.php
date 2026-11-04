@@ -14,7 +14,7 @@ class Transaction
     private readonly InitiationData|null $initiationData;
     private readonly QueryData|null $queryData;
     private readonly CallbackData|null $callbackData;
-    public readonly PaymentStatus $status;
+    public readonly PaymentStatus|string $status;
 
     /**
      * @param array<string, mixed> $data
@@ -40,7 +40,7 @@ class Transaction
             $this->queryData = null;
             $this->callbackData = null;
             $statusValue = $data['status'] ?? 'pending';
-            $this->status = PaymentStatus::from($statusValue);
+            $this->status = PaymentStatus::parse((string) $statusValue);
         }
     }
 

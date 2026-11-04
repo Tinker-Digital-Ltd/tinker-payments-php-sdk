@@ -12,6 +12,7 @@ use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
 use Tinker\Exception\ApiException;
 use Tinker\Exception\ExceptionCode;
+use Tinker\Exception\FeatureNotSupportedException;
 use Tinker\Exception\InvalidPayloadException;
 use Tinker\Exception\NetworkException;
 use Tinker\Model\ApiMeta;
@@ -122,7 +123,9 @@ abstract class BaseManager
     {
         $error = is_array($result) && is_array($result['error'] ?? null) ? $result['error'] : [];
 
-        return new ApiException(
+        $class = FeatureNotSupportedException::CODE === ($error['code'] ?? null) ? FeatureNotSupportedException::class : ApiException::class;
+
+        return new $class(
             $this->extractErrorMessage($result),
             httpStatus: $response->getStatusCode(),
             errorCode: is_string($error['code'] ?? null) ? $error['code'] : null,
