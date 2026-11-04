@@ -19,6 +19,8 @@ Test key prefixes select `https://sandbox-api.tinkerpayments.com/v1/`; other key
 
 ## Payments
 
+Any registered provider id works as `gateway`; `Gateway` lists `MPESA`, `PAYSTACK`, `STRIPE` and `PESAPAL`. List what each provider supports with `$tinker->transactions()->capabilities('KES', 'KE')` (both filters optional). A status the SDK does not know is kept as sent as a string; `completed` is reported as `success`.
+
 ```php
 use Tinker\Enum\Gateway;
 use Tinker\Model\DTO\InitiatePaymentRequest;
@@ -214,8 +216,8 @@ Subscription cancellation is a separate existing operation.
 
 Use `getRefund`, `cancellations`, `getCancellation`, and `payouts()->list()` to
 track requests. `ApiException::$details` retains structured error details, such
-as the recorded cancellation request ID for `CHECKOUT_CANCELLATION_UNSUPPORTED`
-(422), or a new quote for `WITHDRAWAL_FEE_CHANGED` (409). Unsupported cancellation
+as a new quote for `WITHDRAWAL_FEE_CHANGED` (409). An unsupported feature (422 `FEATURE_NOT_SUPPORTED`)
+throws `FeatureNotSupportedException` (an `ApiException`) with `getGateway()`, `getFeature()` and `getAlternatives()`. Unsupported cancellation
 never marks the payment cancelled. Existing administrative review screens handle
 manual refunds and withdrawals.
 
