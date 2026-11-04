@@ -37,6 +37,41 @@ $result = $tinker->transactions()->query(new QueryPaymentRequest(
 
 Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the browser destination, while webhooks are configured separately in the dashboard. Hosted providers may return an authorization URL through `$payment->getInitiationData()?->authorizationUrl`.
 
+### Apple Pay / Google Pay
+
+```php
+$payment = $tinker->transactions()->initiate(new InitiatePaymentRequest(
+    amount: 100, currency: 'USD', gateway: Gateway::STRIPE,
+    merchantReference: 'ORDER-12345',
+    returnUrl: 'https://merchant.example/payment/return',
+    paymentMethod: 'apple_pay', // or 'google_pay'
+));
+$data = $payment->getInitiationData();
+// return $data->clientSecret and $data->publishableKey to the browser as JSON
+```
+
+```html
+<div id="wallet"></div>
+<p id="wallet-error" role="alert"></p>
+<script src="https://js.stripe.com/v3/"></script>
+<script type="module">
+  const { clientSecret, publishableKey } = await fetch("/checkout/wallet", { method: "POST" }).then((r) => r.json());
+  const stripe = Stripe(publishableKey);
+  const elements = stripe.elements({ clientSecret });
+  const wallet = elements.create("expressCheckout", { paymentMethods: { applePay: "always", googlePay: "always" } });
+  wallet.mount("#wallet");
+  wallet.on("confirm", async (event) => {
+    const { error } = await stripe.confirmPayment({ elements, clientSecret, redirect: "if_required", confirmParams: { return_url: location.href } });
+    if (error) {
+      event.paymentFailed({ reason: "fail" });
+      document.querySelector("#wallet-error").textContent = error.message;
+    }
+  });
+</script>
+```
+
+The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
+
 ## Plan subscriptions
 
 ```php

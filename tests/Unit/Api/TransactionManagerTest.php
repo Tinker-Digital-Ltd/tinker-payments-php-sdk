@@ -45,6 +45,21 @@ final class TransactionManagerTest extends TestCase
         );
     }
 
+    public function testInitiateRequestSerializesPaymentMethod(): void
+    {
+        $payload = (new InitiatePaymentRequest(
+            amount: 100.00,
+            currency: 'USD',
+            gateway: Gateway::STRIPE,
+            merchantReference: 'ORDER-12345',
+            returnUrl: 'https://your-app.com/payment/return',
+            paymentMethod: 'apple_pay',
+        ))->toArray();
+
+        $this->assertSame('apple_pay', $payload['paymentMethod']);
+        $this->assertArrayNotHasKey('customerEmail', $payload);
+    }
+
     public function testInitiateCreatesTransaction(): void
     {
         $initiateRequest = new InitiatePaymentRequest(
