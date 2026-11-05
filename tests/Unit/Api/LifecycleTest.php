@@ -169,7 +169,7 @@ final class LifecycleTest extends TestCase
 
     public function testFixtureMatchesCanonicalWhenAvailable(): void
     {
-        $canonical = __DIR__.'/../../../../tinker-payments-openapi/fixtures/merchant-lifecycle.json';
+        $canonical = __DIR__.'/../../../../../tinker-payments-backend/openapi/fixtures/merchant-lifecycle.json';
         if (is_file($canonical)) {
             self::assertSame(json_decode(file_get_contents($canonical), true, flags: JSON_THROW_ON_ERROR), $this->fixtures());
         } else {
