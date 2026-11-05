@@ -46,7 +46,7 @@ $payment = $tinker->transactions()->initiate(new InitiatePaymentRequest(
     amount: 100, currency: 'USD', gateway: Gateway::STRIPE,
     merchantReference: 'ORDER-12345',
     returnUrl: 'https://merchant.example/payment/return',
-    paymentMethod: 'apple_pay', // or 'google_pay'
+    paymentMethod: 'apple_pay', // or 'google_pay'; 'bnpl' is Klarna on Stripe Checkout
 ));
 $data = $payment->getInitiationData();
 // return $data->clientSecret and $data->publishableKey to the browser as JSON
