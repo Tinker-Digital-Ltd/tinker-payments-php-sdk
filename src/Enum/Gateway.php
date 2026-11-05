@@ -9,4 +9,5 @@ enum Gateway: string
     case MPESA = 'mpesa';
     case PAYSTACK = 'paystack';
     case STRIPE = 'stripe';
+    case PESAPAL = 'pesapal';
 }

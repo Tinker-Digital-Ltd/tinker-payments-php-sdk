@@ -14,11 +14,15 @@ use Tinker\Api\PayoutManager;
 use Tinker\Api\TransactionManager;
 use Tinker\Auth\AuthenticationManager;
 use Tinker\Config\Configuration;
+use Tinker\Enum\PaymentStatus;
 use Tinker\Exception\ApiException;
+use Tinker\Exception\FeatureNotSupportedException;
 use Tinker\Exception\InvalidPayloadException;
 use Tinker\Http\RequestFactory;
 use Tinker\Model\DTO\CancellationRequest;
+use Tinker\Model\DTO\InitiatePaymentRequest;
 use Tinker\Model\DTO\PayoutRequest;
+use Tinker\Model\DTO\QueryPaymentRequest;
 use Tinker\Model\DTO\RefundRequest;
 
 final class LifecycleTest extends TestCase
@@ -87,6 +91,50 @@ final class LifecycleTest extends TestCase
         }
     }
 
+    public function testGatewayCases(): void
+    {
+        foreach ($this->fixtures()['gateway']['cases'] as $case) {
+            $history = [];
+            [$transactions] = $this->managers([new Response($case['status'], [], json_encode($case['response']))], $history);
+            $body = $case['body'];
+            try {
+                $result = match ($case['operation']) {
+                    'listPaymentCapabilities' => $transactions->capabilities('KES', 'KE'),
+                    'initiatePayment' => $transactions->initiate(new InitiatePaymentRequest(100, $body['currency'], $body['gateway'], $body['merchantReference'], $body['returnUrl'], $body['customerPhone'] ?? null, paymentMethod: $body['paymentMethod'] ?? null)),
+                    'queryPayment' => $transactions->query(new QueryPaymentRequest($body['reference'], $body['gateway'])),
+                };
+            } catch (FeatureNotSupportedException $e) {
+                self::assertSame(422, $e->httpStatus);
+                self::assertSame('FEATURE_NOT_SUPPORTED', $e->errorCode);
+                self::assertSame($case['response']['error']['details']['gateway'], $e->getGateway());
+                self::assertSame($case['response']['error']['details']['feature'], $e->getFeature());
+                self::assertSame($case['response']['error']['details']['alternatives'], $e->getAlternatives());
+                self::assertInstanceOf(ApiException::class, $e);
+                $result = null;
+            }
+            $request = $history[0]['request'];
+            self::assertSame($case['method'], $request->getMethod());
+            self::assertSame($case['body'] ?? [], json_decode((string) $request->getBody(), true) ?? []);
+            if ('listPaymentCapabilities' === $case['operation']) {
+                self::assertSame($case['response']['data'], $result);
+                self::assertSame('currency=KES&country=KE', $request->getUri()->getQuery());
+            } elseif ('queryPayment' === $case['operation']) {
+                self::assertSame($case['response']['data']['status'], PaymentStatus::text($result->status));
+                self::assertSame(PaymentStatus::REVERSED, $result->status);
+            } elseif ('initiatePayment' === $case['operation'] && 200 === $case['status']) {
+                self::assertSame('pending', $result->status->value);
+            }
+        }
+    }
+
+    public function testStatusParsing(): void
+    {
+        self::assertSame(PaymentStatus::SUCCESS, PaymentStatus::parse('completed'));
+        self::assertSame(PaymentStatus::SUCCESS, PaymentStatus::parse('success'));
+        self::assertSame('brand_new', PaymentStatus::parse('brand_new'));
+        self::assertSame('brand_new', PaymentStatus::text('brand_new'));
+    }
+
     public function testUnsupportedCancellationRetainsRecordedRequestDetails(): void
     {
         $history = [];
@@ -121,7 +169,7 @@ final class LifecycleTest extends TestCase
 
     public function testFixtureMatchesCanonicalWhenAvailable(): void
     {
-        $canonical = __DIR__.'/../../../../tinker-payments-openapi/fixtures/merchant-lifecycle.json';
+        $canonical = __DIR__.'/../../../../../tinker-payments-backend/openapi/fixtures/merchant-lifecycle.json';
         if (is_file($canonical)) {
             self::assertSame(json_decode(file_get_contents($canonical), true, flags: JSON_THROW_ON_ERROR), $this->fixtures());
         } else {

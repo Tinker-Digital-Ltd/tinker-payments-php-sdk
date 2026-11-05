@@ -9,7 +9,7 @@ use Tinker\Enum\PaymentStatus;
 final class InitiationData
 {
     public readonly string $paymentReference;
-    public readonly PaymentStatus $status;
+    public readonly PaymentStatus|string $status;
     public readonly string|null $authorizationUrl;
     public readonly string|null $clientSecret;
     public readonly string|null $publishableKey;
@@ -21,7 +21,7 @@ final class InitiationData
     {
         $this->paymentReference = (string) ($data['paymentReference'] ?? $data['payment_reference'] ?? '');
         $statusValue = $data['status'] ?? 'pending';
-        $this->status = PaymentStatus::from($statusValue);
+        $this->status = PaymentStatus::parse((string) $statusValue);
         $this->authorizationUrl = $data['authorizationUrl'] ?? $data['authorization_url'] ?? null;
         $this->clientSecret = $data['clientSecret'] ?? $data['client_secret'] ?? null;
         $this->publishableKey = $data['publishableKey'] ?? $data['publishable_key'] ?? null;
@@ -34,7 +34,7 @@ final class InitiationData
     {
         return [
             'paymentReference' => $this->paymentReference,
-            'status' => $this->status->value,
+            'status' => PaymentStatus::text($this->status),
             'authorizationUrl' => $this->authorizationUrl,
             'clientSecret' => $this->clientSecret,
             'publishableKey' => $this->publishableKey,

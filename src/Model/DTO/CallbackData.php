@@ -9,7 +9,7 @@ use Tinker\Enum\PaymentStatus;
 final class CallbackData
 {
     public readonly string $id;
-    public readonly PaymentStatus $status;
+    public readonly PaymentStatus|string $status;
     public readonly string $reference;
     public readonly float $amount;
     public readonly string $currency;
@@ -24,7 +24,7 @@ final class CallbackData
     {
         $this->id = $data['id'];
         $statusValue = $data['status'] ?? 'pending';
-        $this->status = PaymentStatus::from($statusValue);
+        $this->status = PaymentStatus::parse((string) $statusValue);
         $this->reference = $data['reference'];
         $this->amount = (float) $data['amount'];
         $this->currency = $data['currency'];
@@ -40,7 +40,7 @@ final class CallbackData
     {
         return [
             'id' => $this->id,
-            'status' => $this->status->value,
+            'status' => PaymentStatus::text($this->status),
             'reference' => $this->reference,
             'amount' => $this->amount,
             'currency' => $this->currency,

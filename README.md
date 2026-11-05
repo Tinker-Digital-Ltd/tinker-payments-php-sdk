@@ -19,6 +19,8 @@ Test key prefixes select `https://sandbox-api.tinkerpayments.com/v1/`; other key
 
 ## Payments
 
+Any registered provider id works as `gateway`; `Gateway` lists `MPESA`, `PAYSTACK`, `STRIPE` and `PESAPAL`. List what each provider supports with `$tinker->transactions()->capabilities('KES', 'KE')` (both filters optional). A status the SDK does not know is kept as sent as a string; `completed` is reported as `success`.
+
 ```php
 use Tinker\Enum\Gateway;
 use Tinker\Model\DTO\InitiatePaymentRequest;
@@ -44,7 +46,7 @@ $payment = $tinker->transactions()->initiate(new InitiatePaymentRequest(
     amount: 100, currency: 'USD', gateway: Gateway::STRIPE,
     merchantReference: 'ORDER-12345',
     returnUrl: 'https://merchant.example/payment/return',
-    paymentMethod: 'apple_pay', // or 'google_pay'
+    paymentMethod: 'apple_pay', // or 'google_pay'; 'bnpl' is Klarna on Stripe Checkout
 ));
 $data = $payment->getInitiationData();
 // return $data->clientSecret and $data->publishableKey to the browser as JSON
@@ -148,7 +150,7 @@ A non-checkout ID (`sub_...`) returns 400 `INVALID_ID`. An expired checkout send
 
 ### Trials with a required payment method
 
-Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility. Alternatively set `trialEnd` to an exact end 48 hours to 730 days ahead; it cannot be combined with `trialDays` (HTTP 400), and the SDK sends it only when set.
+Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `FEATURE_NOT_SUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility. Alternatively set `trialEnd` to an exact end 48 hours to 730 days ahead; it cannot be combined with `trialDays` (HTTP 400), and the SDK sends it only when set.
 
 ```php
 $billing->checkout(new ManagedCheckout(
@@ -214,8 +216,8 @@ Subscription cancellation is a separate existing operation.
 
 Use `getRefund`, `cancellations`, `getCancellation`, and `payouts()->list()` to
 track requests. `ApiException::$details` retains structured error details, such
-as the recorded cancellation request ID for `CHECKOUT_CANCELLATION_UNSUPPORTED`
-(422), or a new quote for `WITHDRAWAL_FEE_CHANGED` (409). Unsupported cancellation
+as a new quote for `WITHDRAWAL_FEE_CHANGED` (409). An unsupported feature (422 `FEATURE_NOT_SUPPORTED`)
+throws `FeatureNotSupportedException` (an `ApiException`) with `getGateway()`, `getFeature()` and `getAlternatives()`. Unsupported cancellation
 never marks the payment cancelled. Existing administrative review screens handle
 manual refunds and withdrawals.
 

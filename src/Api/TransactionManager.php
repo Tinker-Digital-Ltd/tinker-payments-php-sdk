@@ -46,6 +46,14 @@ class TransactionManager extends BaseManager
         return new Transaction($response);
     }
 
+    /** @return array<string, mixed> */
+    public function capabilities(string|null $currency = null, string|null $country = null): array
+    {
+        $query = http_build_query(array_filter(['currency' => $currency, 'country' => $country]));
+
+        return $this->request('GET', Endpoints::PAYMENT_CAPABILITIES_PATH.('' === $query ? '' : '?'.$query));
+    }
+
     public function refund(string $paymentId, RefundRequest $request, string $key): RefundResult
     {
         return new RefundResult($this->request('POST', $this->paymentPath($paymentId).'/refund', $request->toArray(), $this->operationHeaders($key)));

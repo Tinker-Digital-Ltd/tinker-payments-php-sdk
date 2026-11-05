@@ -12,6 +12,7 @@ final class Endpoints
     public const string AUTH_TOKEN_PATH = '/auth/token';
     public const string PAYMENT_INITIATE_PATH = '/merchant/payment/initiate';
     public const string PAYMENT_QUERY_PATH = '/merchant/payment/query';
+    public const string PAYMENT_CAPABILITIES_PATH = '/merchant/payment/capabilities';
     public const string SUBSCRIPTION_BASE_PATH = '/merchant/subscriptions';
     public const string SUBSCRIPTION_PLANS_PATH = '/merchant/subscriptions/plans';
 }
