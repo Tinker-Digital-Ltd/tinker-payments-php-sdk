@@ -16,6 +16,7 @@ final class PaymentEventData
     public readonly string $channel;
     public readonly string $createdAt;
     public readonly string|null $paidAt;
+    public readonly string|null $country;
 
     /**
      * @param array<string, mixed> $data
@@ -31,6 +32,7 @@ final class PaymentEventData
         $this->channel = (string) ($data['channel'] ?? '');
         $this->createdAt = (string) ($data['created_at'] ?? '');
         $this->paidAt = $data['paid_at'] ?? null;
+        $this->country = $data['country'] ?? null;
     }
 
     /**
@@ -47,6 +49,6 @@ final class PaymentEventData
             'channel' => $this->channel,
             'created_at' => $this->createdAt,
             'paid_at' => $this->paidAt,
-        ];
+        ] + (null === $this->country ? [] : ['country' => $this->country]);
     }
 }

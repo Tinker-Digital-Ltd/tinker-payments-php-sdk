@@ -19,7 +19,7 @@ Test key prefixes select `https://sandbox-api.tinkerpayments.com/v1/`; other key
 
 ## Payments
 
-Any registered provider id works as `gateway`; `Gateway` lists `MPESA`, `PAYSTACK`, `STRIPE` and `PESAPAL`. List what each provider supports with `$tinker->transactions()->capabilities('KES', 'KE')` (both filters optional). A status the SDK does not know is kept as sent as a string; `completed` is reported as `success`.
+Any registered provider id works as `gateway`; `Gateway` lists `MPESA`, `PAYSTACK`, `STRIPE` and `PESAPAL`. List what each provider supports with `$tinker->transactions()->capabilities('KES', 'KE')` (both filters optional). `country` (ISO alpha-2) is optional on `InitiatePaymentRequest` and `CreateSubscriptionRequest`, `customerName` on `InitiatePaymentRequest`; `country` comes back on payments and `payment.*` webhooks. A status the SDK does not know is kept as sent as a string; `completed` is reported as `success`.
 
 ```php
 use Tinker\Enum\Gateway;
@@ -92,6 +92,11 @@ $subscription = $plans->create(new CreateSubscriptionRequest(
     ),
 ));
 $all = $plans->list();
+$plans->updatePlan($plan['id'], new CreateSubscriptionPlanRequest(
+    name: 'Pro Monthly', amount: 34.99, currency: 'USD', intervals: ['monthly'],
+));
+$invoices = $plans->listInvoices($subscription['subscription_id'], page: 1, pageSize: 25); // all arguments optional
+$plans->deletePlan($plan['id']);
 $plans->cancel($subscription['subscription_id']);
 ```
 

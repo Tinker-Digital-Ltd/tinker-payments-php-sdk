@@ -16,6 +16,7 @@ final class QueryData
     public readonly string|null $paidAt;
     public readonly string $createdAt;
     public readonly string $channel;
+    public readonly string|null $country;
 
     /**
      * @param array<string, mixed> $data
@@ -31,6 +32,7 @@ final class QueryData
         $this->paidAt = $data['paid_at'] ?? null;
         $this->createdAt = $data['created_at'];
         $this->channel = $data['channel'];
+        $this->country = $data['country'] ?? null;
     }
 
     /**
@@ -47,6 +49,6 @@ final class QueryData
             'paid_at' => $this->paidAt,
             'created_at' => $this->createdAt,
             'channel' => $this->channel,
-        ];
+        ] + (null === $this->country ? [] : ['country' => $this->country]);
     }
 }

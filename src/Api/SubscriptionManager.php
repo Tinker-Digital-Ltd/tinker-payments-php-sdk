@@ -48,6 +48,47 @@ class SubscriptionManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
+    public function updatePlan(string $planId, CreateSubscriptionPlanRequest $request): array
+    {
+        return $this->request('PUT', Endpoints::SUBSCRIPTION_PLANS_PATH.'/'.rawurlencode($planId), $request->toArray());
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
+    public function deletePlan(string $planId): array
+    {
+        return $this->request('DELETE', Endpoints::SUBSCRIPTION_PLANS_PATH.'/'.rawurlencode($planId));
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
+    public function listInvoices(string|null $subscriptionId = null, int|null $page = null, int|null $pageSize = null): array
+    {
+        $query = http_build_query(array_filter(
+            ['subscription_id' => $subscriptionId, 'page' => $page, 'page_size' => $pageSize],
+            static fn (mixed $value): bool => null !== $value && '' !== $value,
+        ));
+
+        return $this->request('GET', Endpoints::SUBSCRIPTION_INVOICES_PATH.('' === $query ? '' : '?'.$query));
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
     public function create(CreateSubscriptionRequest $request): array
     {
         return $this->request('POST', Endpoints::SUBSCRIPTION_BASE_PATH, $request->toArray());

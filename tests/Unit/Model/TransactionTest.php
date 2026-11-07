@@ -226,4 +226,25 @@ final class TransactionTest extends TestCase
         $this->assertTrue($transaction->isFailed());
         $this->assertSame(PaymentStatus::FAILED, $transaction->status);
     }
+
+    public function testQueryDataCarriesCountryOnlyWhenSent(): void
+    {
+        $data = ['id' => '1', 'reference' => 'R', 'amount' => 1, 'currency' => 'EUR', 'status' => 'authorised', 'created_at' => 't', 'channel' => 'card'];
+        $with = (new Transaction($data + ['country' => 'DE']))->getQueryData();
+        $without = (new Transaction($data))->getQueryData();
+        $this->assertSame('DE', $with->country);
+        $this->assertSame('DE', $with->toArray()['country']);
+        $this->assertSame(PaymentStatus::AUTHORISED, $with->status);
+        $this->assertNull($without->country);
+        $this->assertArrayNotHasKey('country', $without->toArray());
+    }
+
+    public function testInitiateRequestSendsCustomerNameAndCountryOnlyWhenSet(): void
+    {
+        $base = new \Tinker\Model\DTO\InitiatePaymentRequest(1.0, 'EUR', 'adyen', 'R', 'https://x.test');
+        $this->assertArrayNotHasKey('country', $base->toArray());
+        $this->assertArrayNotHasKey('customerName', $base->toArray());
+        $full = new \Tinker\Model\DTO\InitiatePaymentRequest(1.0, 'EUR', 'adyen', 'R', 'https://x.test', customerName: 'Ada', country: 'DE');
+        $this->assertSame(['Ada', 'DE'], [$full->toArray()['customerName'], $full->toArray()['country']]);
+    }
 }

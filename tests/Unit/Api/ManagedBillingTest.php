@@ -13,6 +13,7 @@ use Tinker\Config\Configuration;
 use Tinker\Exception\ApiException;
 use Tinker\Http\RequestFactory;
 use Tinker\Http\Response;
+use Tinker\Model\DTO\CreateSubscriptionPlanRequest;
 use Tinker\Model\DTO\ManagedCheckout;
 
 final class ManagedBillingTest extends TestCase
@@ -73,6 +74,32 @@ final class ManagedBillingTest extends TestCase
         }
         self::assertSame($expected, $actual);
         self::assertSame(['snapshot' => 123, 'next_cursor' => 'in_next', 'has_more' => true], $page);
+    }
+
+    public function testPlanUpdateDeleteAndInvoiceListUseSpecRoutes(): void
+    {
+        $calls = [];
+        $response = new Response();
+        $response->getBody()->write('{"success":true,"data":{"ok":true}}');
+        $http = $this->createMock(ClientInterface::class);
+        $http->method('sendRequest')->willReturnCallback(static function (RequestInterface $request) use (&$calls, $response) {
+            $calls[] = [$request->getMethod(), explode('/v1/', (string) $request->getUri())[1], json_decode((string) $request->getBody(), true)];
+            $response->getBody()->rewind();
+
+            return $response;
+        });
+        $m = $this->manager($http);
+        $plan = new CreateSubscriptionPlanRequest('Pro', 10.5, 'EUR', ['monthly']);
+        $m->updatePlan('plan/a b', $plan);
+        $m->deletePlan('plan/a b');
+        $m->listInvoices('sub-1', 2, 50);
+        $m->listInvoices();
+        self::assertSame([
+            ['PUT', 'merchant/subscriptions/plans/plan%2Fa%20b', $plan->toArray()],
+            ['DELETE', 'merchant/subscriptions/plans/plan%2Fa%20b', null],
+            ['GET', 'merchant/subscriptions/invoices?subscription_id=sub-1&page=2&page_size=50', null],
+            ['GET', 'merchant/subscriptions/invoices', null],
+        ], array_slice($calls, -4));
     }
 
     public function testTrialDaysAreSentOnlyWhenPositive(): void
