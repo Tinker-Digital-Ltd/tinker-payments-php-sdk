@@ -6,11 +6,11 @@ namespace Tinker\Exception;
 
 final class ExceptionCode
 {
-    public const int API_ERROR = 1000;
-    public const int NETWORK_ERROR = 2000;
-    public const int AUTHENTICATION_ERROR = 3000;
-    public const int INVALID_PAYLOAD = 4000;
-    public const int WEBHOOK_ERROR = 5000;
-    public const int STREAM_ERROR = 6000;
-    public const int CLIENT_ERROR = 7000;
+    public const API_ERROR = 1000;
+    public const NETWORK_ERROR = 2000;
+    public const AUTHENTICATION_ERROR = 3000;
+    public const INVALID_PAYLOAD = 4000;
+    public const WEBHOOK_ERROR = 5000;
+    public const STREAM_ERROR = 6000;
+    public const CLIENT_ERROR = 7000;
 }

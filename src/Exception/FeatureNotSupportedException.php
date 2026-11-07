@@ -6,7 +6,7 @@ namespace Tinker\Exception;
 
 final class FeatureNotSupportedException extends ApiException
 {
-    public const string CODE = 'FEATURE_NOT_SUPPORTED';
+    public const CODE = 'FEATURE_NOT_SUPPORTED';
 
     public function getGateway(): string|null
     {
