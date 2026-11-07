@@ -74,6 +74,61 @@ $data = $payment->getInitiationData();
 
 The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
+## Provider examples
+
+Every provider takes the same request. Keys and values are fake.
+
+```php
+use Tinker\Exception\FeatureNotSupportedException;
+use Tinker\Model\DTO\InitiatePaymentRequest;
+
+$tx = $tinker->transactions();
+$returnUrl = 'https://shop.example/return';
+
+// Redirect (Paystack, Pesapal, PayPal, Flutterwave, DPO, Interswitch, Adyen, Plaid, hosted Stripe):
+// send the customer to $payment->getInitiationData()?->authorizationUrl.
+$payment = $tx->initiate(new InitiatePaymentRequest(
+    amount: 2500, currency: 'NGN', gateway: 'paystack', merchantReference: 'ORDER-1',
+    returnUrl: $returnUrl, customerEmail: 'jane@example.com',
+));
+
+// Phone approval (M-Pesa, MTN MoMo): no authorizationUrl. The customer approves on their phone
+// and the result arrives as a payment.completed or payment.failed webhook.
+$tx->initiate(new InitiatePaymentRequest(
+    amount: 100, currency: 'KES', gateway: 'mpesa', merchantReference: 'ORDER-2',
+    returnUrl: $returnUrl, customerPhone: '+254712345678',
+));
+
+// Klarna (paymentMethod 'bnpl' on Stripe or Adyen) is captured at once. Adyen also needs country
+// (AT DK FI DE NO SE CH NL GB US) and that country's currency.
+$tx->initiate(new InitiatePaymentRequest(
+    amount: 49.9, currency: 'EUR', gateway: 'adyen', merchantReference: 'ORDER-3',
+    returnUrl: $returnUrl, customerEmail: 'jane@example.com', paymentMethod: 'bnpl', country: 'DE',
+));
+
+// Plaid (plaid_transfer, plaid_payments): customerName is required.
+// Payment Initiation INITIATED counts as paid.
+$tx->initiate(new InitiatePaymentRequest(
+    amount: 40, currency: 'GBP', gateway: 'plaid_payments', merchantReference: 'ORDER-4',
+    returnUrl: $returnUrl, customerEmail: 'jane@example.com', customerName: 'Jane Doe', country: 'GB',
+));
+
+// Ask first, then handle a refusal.
+foreach ($tx->capabilities('KES', 'KE')['providers'] as $p) {
+    echo $p['gateway'], ' ', $p['capabilities']['pay_mobile_money'], "\n";
+}
+try {
+    $tx->initiate(new InitiatePaymentRequest(
+        amount: 100, currency: 'KES', gateway: 'mpesa', merchantReference: 'ORDER-5',
+        returnUrl: $returnUrl, customerPhone: '+254712345678', paymentMethod: 'apple_pay',
+    ));
+} catch (FeatureNotSupportedException $error) {
+    echo $error->getGateway(), ' ', $error->getFeature(), ' ', implode(',', $error->getAlternatives());
+}
+```
+
+Pay-as-you-go apps use Tinker's provider credentials; your own need a paid plan (HTTP 403 `PAID_PLAN_REQUIRED`).
+
 ## Plan subscriptions
 
 ```php
