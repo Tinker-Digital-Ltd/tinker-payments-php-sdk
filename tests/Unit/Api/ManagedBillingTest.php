@@ -141,6 +141,13 @@ final class ManagedBillingTest extends TestCase
         self::assertSame('legacy', $legacy->getMessage());
     }
 
+    public function testPlanFeaturesJsonIsSentOnlyWhenSet(): void
+    {
+        self::assertArrayNotHasKey('features_json', (new CreateSubscriptionPlanRequest('Pro', 1.0, 'EUR', ['monthly']))->toArray());
+        $plan = new CreateSubscriptionPlanRequest('Pro', 1.0, 'EUR', ['monthly'], featuresJson: ['seats' => 5]);
+        self::assertSame(['seats' => 5], $plan->toArray()['features_json']);
+    }
+
     private function manager(ClientInterface $http): SubscriptionManager
     {
         $config = new Configuration('public', 'secret');

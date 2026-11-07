@@ -7,7 +7,8 @@ namespace Tinker\Model\DTO;
 final class CreateSubscriptionPlanRequest
 {
     /**
-     * @param array<int, string> $intervals
+     * @param array<int, string>        $intervals
+     * @param array<string, mixed>|null $featuresJson
      */
     public function __construct(
         public readonly string $name,
@@ -16,6 +17,7 @@ final class CreateSubscriptionPlanRequest
         public readonly array $intervals,
         public readonly string $description = '',
         public readonly bool $isActive = true,
+        public readonly array|null $featuresJson = null,
     ) {
     }
 
@@ -24,7 +26,7 @@ final class CreateSubscriptionPlanRequest
      */
     public function toArray(): array
     {
-        return [
+        $payload = [
             'name' => $this->name,
             'description' => $this->description,
             'amount' => $this->amount,
@@ -32,5 +34,11 @@ final class CreateSubscriptionPlanRequest
             'intervals' => $this->intervals,
             'is_active' => $this->isActive,
         ];
+
+        if (null !== $this->featuresJson) {
+            $payload['features_json'] = $this->featuresJson;
+        }
+
+        return $payload;
     }
 }
