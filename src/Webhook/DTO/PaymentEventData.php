@@ -9,13 +9,14 @@ use Tinker\Enum\PaymentStatus;
 final class PaymentEventData
 {
     public readonly string $id;
-    public readonly PaymentStatus $status;
+    public readonly PaymentStatus|string $status;
     public readonly string $reference;
     public readonly float $amount;
     public readonly string $currency;
     public readonly string $channel;
     public readonly string $createdAt;
     public readonly string|null $paidAt;
+    public readonly string|null $country;
 
     /**
      * @param array<string, mixed> $data
@@ -24,13 +25,14 @@ final class PaymentEventData
     {
         $this->id = (string) ($data['id'] ?? '');
         $statusValue = $data['status'] ?? 'pending';
-        $this->status = PaymentStatus::from($statusValue);
+        $this->status = PaymentStatus::parse((string) $statusValue);
         $this->reference = (string) ($data['reference'] ?? '');
         $this->amount = (float) ($data['amount'] ?? 0);
         $this->currency = (string) ($data['currency'] ?? '');
         $this->channel = (string) ($data['channel'] ?? '');
         $this->createdAt = (string) ($data['created_at'] ?? '');
         $this->paidAt = $data['paid_at'] ?? null;
+        $this->country = $data['country'] ?? null;
     }
 
     /**
@@ -40,13 +42,13 @@ final class PaymentEventData
     {
         return [
             'id' => $this->id,
-            'status' => $this->status->value,
+            'status' => PaymentStatus::text($this->status),
             'reference' => $this->reference,
             'amount' => $this->amount,
             'currency' => $this->currency,
             'channel' => $this->channel,
             'created_at' => $this->createdAt,
             'paid_at' => $this->paidAt,
-        ];
+        ] + (null === $this->country ? [] : ['country' => $this->country]);
     }
 }

@@ -22,6 +22,8 @@ final class InitiatePaymentRequest
         public readonly string|null $transactionDesc = null,
         public readonly array|null $metadata = null,
         public readonly string|null $paymentMethod = null,
+        public readonly string|null $customerName = null,
+        public readonly string|null $country = null,
     ) {
     }
 
@@ -46,6 +48,14 @@ final class InitiatePaymentRequest
 
         if (null !== $this->customerEmail) {
             $payload['customerEmail'] = $this->customerEmail;
+        }
+
+        if (null !== $this->customerName) {
+            $payload['customerName'] = $this->customerName;
+        }
+
+        if (null !== $this->country) {
+            $payload['country'] = $this->country;
         }
 
         if (null !== $this->transactionDesc) {

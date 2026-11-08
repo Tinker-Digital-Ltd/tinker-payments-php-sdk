@@ -9,13 +9,14 @@ use Tinker\Enum\PaymentStatus;
 final class QueryData
 {
     public readonly string $id;
-    public readonly PaymentStatus $status;
+    public readonly PaymentStatus|string $status;
     public readonly string $reference;
     public readonly float $amount;
     public readonly string $currency;
     public readonly string|null $paidAt;
     public readonly string $createdAt;
     public readonly string $channel;
+    public readonly string|null $country;
 
     /**
      * @param array<string, mixed> $data
@@ -24,13 +25,14 @@ final class QueryData
     {
         $this->id = $data['id'];
         $statusValue = $data['status'] ?? 'pending';
-        $this->status = PaymentStatus::from($statusValue);
+        $this->status = PaymentStatus::parse((string) $statusValue);
         $this->reference = $data['reference'];
         $this->amount = (float) $data['amount'];
         $this->currency = $data['currency'];
         $this->paidAt = $data['paid_at'] ?? null;
         $this->createdAt = $data['created_at'];
         $this->channel = $data['channel'];
+        $this->country = $data['country'] ?? null;
     }
 
     /**
@@ -40,13 +42,13 @@ final class QueryData
     {
         return [
             'id' => $this->id,
-            'status' => $this->status->value,
+            'status' => PaymentStatus::text($this->status),
             'reference' => $this->reference,
             'amount' => $this->amount,
             'currency' => $this->currency,
             'paid_at' => $this->paidAt,
             'created_at' => $this->createdAt,
             'channel' => $this->channel,
-        ];
+        ] + (null === $this->country ? [] : ['country' => $this->country]);
     }
 }

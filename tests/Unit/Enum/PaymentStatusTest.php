@@ -24,4 +24,13 @@ final class PaymentStatusTest extends TestCase
         $this->assertSame(PaymentStatus::CANCELLED, PaymentStatus::from('cancelled'));
         $this->assertSame(PaymentStatus::FAILED, PaymentStatus::from('failed'));
     }
+
+    public function testSpecValuesParseAndUnknownValuesSurvive(): void
+    {
+        foreach (['authorised', 'blocked', 'refunded', 'partially_refunded', 'expired', 'reversed'] as $value) {
+            $this->assertSame($value, PaymentStatus::parse($value)->value);
+        }
+        $this->assertSame(PaymentStatus::SUCCESS, PaymentStatus::parse('completed'));
+        $this->assertSame('future_status', PaymentStatus::parse('future_status'));
+    }
 }

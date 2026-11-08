@@ -19,6 +19,8 @@ Test key prefixes select `https://sandbox-api.tinkerpayments.com/v1/`; other key
 
 ## Payments
 
+Any registered provider id works as `gateway`; `Gateway` lists `MPESA`, `PAYSTACK`, `STRIPE` and `PESAPAL`. List what each provider supports with `$tinker->transactions()->capabilities('KES', 'KE')` (both filters optional). `country` (ISO alpha-2) is optional on `InitiatePaymentRequest` and `CreateSubscriptionRequest`, `customerName` on `InitiatePaymentRequest`; `country` comes back on payments and `payment.*` webhooks. A status the SDK does not know is kept as sent as a string; `completed` is reported as `success`.
+
 ```php
 use Tinker\Enum\Gateway;
 use Tinker\Model\DTO\InitiatePaymentRequest;
@@ -44,7 +46,7 @@ $payment = $tinker->transactions()->initiate(new InitiatePaymentRequest(
     amount: 100, currency: 'USD', gateway: Gateway::STRIPE,
     merchantReference: 'ORDER-12345',
     returnUrl: 'https://merchant.example/payment/return',
-    paymentMethod: 'apple_pay', // or 'google_pay'
+    paymentMethod: 'apple_pay', // or 'google_pay'; 'bnpl' is Klarna on Stripe Checkout
 ));
 $data = $payment->getInitiationData();
 // return $data->clientSecret and $data->publishableKey to the browser as JSON
@@ -72,6 +74,61 @@ $data = $payment->getInitiationData();
 
 The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
+## Provider examples
+
+Every provider takes the same request. Keys and values are fake.
+
+```php
+use Tinker\Exception\FeatureNotSupportedException;
+use Tinker\Model\DTO\InitiatePaymentRequest;
+
+$tx = $tinker->transactions();
+$returnUrl = 'https://shop.example/return';
+
+// Redirect (Paystack, Pesapal, PayPal, Flutterwave, DPO, Interswitch, Adyen, Plaid, hosted Stripe):
+// send the customer to $payment->getInitiationData()?->authorizationUrl.
+$payment = $tx->initiate(new InitiatePaymentRequest(
+    amount: 2500, currency: 'NGN', gateway: 'paystack', merchantReference: 'ORDER-1',
+    returnUrl: $returnUrl, customerEmail: 'jane@example.com',
+));
+
+// Phone approval (M-Pesa, MTN MoMo): no authorizationUrl. The customer approves on their phone
+// and the result arrives as a payment.completed or payment.failed webhook.
+$tx->initiate(new InitiatePaymentRequest(
+    amount: 100, currency: 'KES', gateway: 'mpesa', merchantReference: 'ORDER-2',
+    returnUrl: $returnUrl, customerPhone: '+254712345678',
+));
+
+// Klarna (paymentMethod 'bnpl' on Stripe or Adyen) is captured at once. Adyen also needs country
+// (AT DK FI DE NO SE CH NL GB US) and that country's currency.
+$tx->initiate(new InitiatePaymentRequest(
+    amount: 49.9, currency: 'EUR', gateway: 'adyen', merchantReference: 'ORDER-3',
+    returnUrl: $returnUrl, customerEmail: 'jane@example.com', paymentMethod: 'bnpl', country: 'DE',
+));
+
+// Plaid (plaid_transfer, plaid_payments): customerName is required.
+// Payment Initiation INITIATED counts as paid.
+$tx->initiate(new InitiatePaymentRequest(
+    amount: 40, currency: 'GBP', gateway: 'plaid_payments', merchantReference: 'ORDER-4',
+    returnUrl: $returnUrl, customerEmail: 'jane@example.com', customerName: 'Jane Doe', country: 'GB',
+));
+
+// Ask first, then handle a refusal.
+foreach ($tx->capabilities('KES', 'KE')['providers'] as $p) {
+    echo $p['gateway'], ' ', $p['capabilities']['pay_mobile_money'], "\n";
+}
+try {
+    $tx->initiate(new InitiatePaymentRequest(
+        amount: 100, currency: 'KES', gateway: 'mpesa', merchantReference: 'ORDER-5',
+        returnUrl: $returnUrl, customerPhone: '+254712345678', paymentMethod: 'apple_pay',
+    ));
+} catch (FeatureNotSupportedException $error) {
+    echo $error->getGateway(), ' ', $error->getFeature(), ' ', implode(',', $error->getAlternatives());
+}
+```
+
+Pay-as-you-go apps use Tinker's provider credentials; your own need a paid plan (HTTP 403 `PAID_PLAN_REQUIRED`).
+
 ## Plan subscriptions
 
 ```php
@@ -90,6 +147,11 @@ $subscription = $plans->create(new CreateSubscriptionRequest(
     ),
 ));
 $all = $plans->list();
+$plans->updatePlan($plan['id'], new CreateSubscriptionPlanRequest(
+    name: 'Pro Monthly', amount: 34.99, currency: 'USD', intervals: ['monthly'],
+));
+$invoices = $plans->listInvoices($subscription['subscription_id'], page: 1, pageSize: 25); // all arguments optional
+$plans->deletePlan($plan['id']);
 $plans->cancel($subscription['subscription_id']);
 ```
 
@@ -148,7 +210,7 @@ A non-checkout ID (`sub_...`) returns 400 `INVALID_ID`. An expired checkout send
 
 ### Trials with a required payment method
 
-Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility. Alternatively set `trialEnd` to an exact end 48 hours to 730 days ahead; it cannot be combined with `trialDays` (HTTP 400), and the SDK sends it only when set.
+Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `FEATURE_NOT_SUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility. Alternatively set `trialEnd` to an exact end 48 hours to 730 days ahead; it cannot be combined with `trialDays` (HTTP 400), and the SDK sends it only when set.
 
 ```php
 $billing->checkout(new ManagedCheckout(
@@ -214,8 +276,8 @@ Subscription cancellation is a separate existing operation.
 
 Use `getRefund`, `cancellations`, `getCancellation`, and `payouts()->list()` to
 track requests. `ApiException::$details` retains structured error details, such
-as the recorded cancellation request ID for `CHECKOUT_CANCELLATION_UNSUPPORTED`
-(422), or a new quote for `WITHDRAWAL_FEE_CHANGED` (409). Unsupported cancellation
+as a new quote for `WITHDRAWAL_FEE_CHANGED` (409). An unsupported feature (422 `FEATURE_NOT_SUPPORTED`)
+throws `FeatureNotSupportedException` (an `ApiException`) with `getGateway()`, `getFeature()` and `getAlternatives()`. Unsupported cancellation
 never marks the payment cancelled. Existing administrative review screens handle
 manual refunds and withdrawals.
 

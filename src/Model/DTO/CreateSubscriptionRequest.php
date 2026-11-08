@@ -12,6 +12,7 @@ final class CreateSubscriptionRequest
         public readonly SubscriptionCustomer $customer,
         public readonly string|null $paymentMethodId = null,
         public readonly string|null $billingPeriod = null,
+        public readonly string|null $country = null,
     ) {
     }
 
@@ -32,6 +33,10 @@ final class CreateSubscriptionRequest
 
         if (null !== $this->billingPeriod) {
             $data['billing_period'] = $this->billingPeriod;
+        }
+
+        if (null !== $this->country) {
+            $data['country'] = $this->country;
         }
 
         return $data;

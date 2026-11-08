@@ -13,6 +13,7 @@ use Tinker\Config\Configuration;
 use Tinker\Exception\ApiException;
 use Tinker\Http\RequestFactory;
 use Tinker\Http\Response;
+use Tinker\Model\DTO\CreateSubscriptionPlanRequest;
 use Tinker\Model\DTO\ManagedCheckout;
 
 final class ManagedBillingTest extends TestCase
@@ -75,6 +76,32 @@ final class ManagedBillingTest extends TestCase
         self::assertSame(['snapshot' => 123, 'next_cursor' => 'in_next', 'has_more' => true], $page);
     }
 
+    public function testPlanUpdateDeleteAndInvoiceListUseSpecRoutes(): void
+    {
+        $calls = [];
+        $response = new Response();
+        $response->getBody()->write('{"success":true,"data":{"ok":true}}');
+        $http = $this->createMock(ClientInterface::class);
+        $http->method('sendRequest')->willReturnCallback(static function (RequestInterface $request) use (&$calls, $response) {
+            $calls[] = [$request->getMethod(), explode('/v1/', (string) $request->getUri())[1], json_decode((string) $request->getBody(), true)];
+            $response->getBody()->rewind();
+
+            return $response;
+        });
+        $m = $this->manager($http);
+        $plan = new CreateSubscriptionPlanRequest('Pro', 10.5, 'EUR', ['monthly']);
+        $m->updatePlan('plan/a b', $plan);
+        $m->deletePlan('plan/a b');
+        $m->listInvoices('sub-1', 2, 50);
+        $m->listInvoices();
+        self::assertSame([
+            ['PUT', 'merchant/subscriptions/plans/plan%2Fa%20b', $plan->toArray()],
+            ['DELETE', 'merchant/subscriptions/plans/plan%2Fa%20b', null],
+            ['GET', 'merchant/subscriptions/invoices?subscription_id=sub-1&page=2&page_size=50', null],
+            ['GET', 'merchant/subscriptions/invoices', null],
+        ], array_slice($calls, -4));
+    }
+
     public function testTrialDaysAreSentOnlyWhenPositive(): void
     {
         $args = ['workspace', 'buyer@example.com', 'Buyer', 'EUR', 15000, 3, 'year', 'https://example.com/return', 'checkout-key'];
@@ -112,6 +139,13 @@ final class ManagedBillingTest extends TestCase
         $legacy = new ApiException('legacy', 123);
         self::assertSame(123, $legacy->getCode());
         self::assertSame('legacy', $legacy->getMessage());
+    }
+
+    public function testPlanFeaturesJsonIsSentOnlyWhenSet(): void
+    {
+        self::assertArrayNotHasKey('features_json', (new CreateSubscriptionPlanRequest('Pro', 1.0, 'EUR', ['monthly']))->toArray());
+        $plan = new CreateSubscriptionPlanRequest('Pro', 1.0, 'EUR', ['monthly'], featuresJson: ['seats' => 5]);
+        self::assertSame(['seats' => 5], $plan->toArray()['features_json']);
     }
 
     private function manager(ClientInterface $http): SubscriptionManager
