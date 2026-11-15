@@ -240,6 +240,22 @@ For payment history, keep the returned `snapshot` across `next_cursor` pages unt
 
 Quarantine items with `reconciliation_reason` and verify every page before committing a scan. The snapshot is an event cutoff, not an immutable provider snapshot: rescan from the first page to discover later adjustments, then apply facts idempotently by payment/adjustment ID. Zero-cash invoices advance pagination without an item. Processing/dispute fees are excluded from eligible principal; currency conversion and customer credits need explicit reconciliation.
 
+## Customer access
+
+Read what a customer may use, keyed by your own customer ID. Unknown customers or keys return `active: false` from `getEntitlement`; `getCustomer` throws an `ApiException` (`CUSTOMER_NOT_FOUND`) for an unknown customer.
+
+```php
+$tinker->subscriptions()->setPlanEntitlements('plan-id', ['pro', 'export']);
+$customers = $tinker->customers();
+$pro = $customers->getEntitlement('workspace-123', 'pro');
+if ($pro['active']) {
+    // grant access until $pro['expires_at']
+}
+$customer = $customers->getCustomer('workspace-123'); // entitlements and subscriptions
+```
+
+Pass `entitlements: ['pro']` to `ManagedCheckout` to grant keys from a managed checkout.
+
 ## Refunds, merchant payouts and checkout cancellation
 
 A payout is a withdrawal from the merchant's available Tinker wallet balance to

@@ -19,6 +19,8 @@ final class ManagedCheckout
         public readonly string $idempotencyKey,
         public readonly int $trialDays = 0,
         public readonly \DateTimeInterface|null $trialEnd = null,
+        /** @var list<string> */
+        public readonly array $entitlements = [],
     ) {
     }
 
@@ -41,6 +43,9 @@ final class ManagedCheckout
         }
         if (null !== $this->trialEnd) {
             $payload['trial_end'] = $this->trialEnd->getTimestamp();
+        }
+        if ([] !== $this->entitlements) {
+            $payload['entitlements'] = $this->entitlements;
         }
 
         return $payload;

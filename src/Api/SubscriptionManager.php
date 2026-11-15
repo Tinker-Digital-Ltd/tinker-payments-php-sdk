@@ -72,6 +72,32 @@ class SubscriptionManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
+    public function getPlanEntitlements(string $planId): array
+    {
+        return $this->request('GET', Endpoints::SUBSCRIPTION_PLANS_PATH.'/'.rawurlencode($planId).'/entitlements');
+    }
+
+    /**
+     * @param list<string> $keys
+     *
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
+    public function setPlanEntitlements(string $planId, array $keys): array
+    {
+        return $this->request('PUT', Endpoints::SUBSCRIPTION_PLANS_PATH.'/'.rawurlencode($planId).'/entitlements', ['keys' => $keys]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
     public function listInvoices(string|null $subscriptionId = null, int|null $page = null, int|null $pageSize = null): array
     {
         $query = http_build_query(array_filter(

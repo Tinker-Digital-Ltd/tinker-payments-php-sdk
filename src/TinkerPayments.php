@@ -6,6 +6,7 @@ namespace Tinker;
 
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Tinker\Api\CustomerManager;
 use Tinker\Api\PayoutManager;
 use Tinker\Api\SubscriptionManager;
 use Tinker\Api\TransactionManager;
@@ -25,6 +26,7 @@ class TinkerPayments
     private PayoutManager|null $payouts = null;
     private TransactionManager|null $transactions = null;
     private SubscriptionManager|null $subscriptions = null;
+    private CustomerManager|null $customers = null;
     private WebhookHandler|null $webhooks = null;
 
     public function __construct(
@@ -67,6 +69,16 @@ class TinkerPayments
     public function subscriptions(): SubscriptionManager
     {
         return $this->subscriptions ??= new SubscriptionManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function customers(): CustomerManager
+    {
+        return $this->customers ??= new CustomerManager(
             $this->config,
             $this->httpClient,
             $this->requestFactory,
