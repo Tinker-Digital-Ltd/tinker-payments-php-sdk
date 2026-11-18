@@ -10,6 +10,7 @@ final class SubscriptionEventData
     public readonly string $status;
     public readonly string $planId;
     public readonly string $accountId;
+    public readonly string|null $externalCustomerId;
     public readonly string|null $currentPeriodStart;
     public readonly string|null $currentPeriodEnd;
     public readonly string $createdAt;
@@ -33,6 +34,7 @@ final class SubscriptionEventData
         $this->status = (string) ($data['status'] ?? '');
         $this->planId = $data['plan_id'] ?? '';
         $this->accountId = $data['account_id'] ?? $data['customer_id'] ?? '';
+        $this->externalCustomerId = $data['external_customer_id'] ?? null;
         $this->currentPeriodStart = $data['current_period_start'] ?? null;
         $this->currentPeriodEnd = $data['current_period_end'] ?? null;
         $this->createdAt = $data['created_at'] ?? $this->currentPeriodStart ?? '';
@@ -58,6 +60,7 @@ final class SubscriptionEventData
             'status' => $this->status,
             'plan_id' => $this->planId,
             'account_id' => $this->accountId,
+            'external_customer_id' => $this->externalCustomerId,
             'current_period_start' => $this->currentPeriodStart,
             'current_period_end' => $this->currentPeriodEnd,
             'created_at' => $this->createdAt,

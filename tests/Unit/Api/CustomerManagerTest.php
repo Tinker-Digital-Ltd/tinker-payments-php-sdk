@@ -144,8 +144,9 @@ final class CustomerManagerTest extends TestCase
         $this->assertInstanceOf(CustomerEventData::class, $moved->getCustomerData());
         $this->assertSame(['b'], $moved->getCustomerData()->transferredTo);
 
-        $issue = new WebhookEvent(['id' => '4', 'type' => 'subscription.billing_issue', 'source' => 'subscription', 'timestamp' => 't', 'data' => ['subscription_id' => 's', 'product_id' => 'p', 'entitlement_ids' => ['pro'], 'grace_period_expiration_at' => 'g']]);
+        $issue = new WebhookEvent(['id' => '4', 'type' => 'subscription.billing_issue', 'source' => 'subscription', 'timestamp' => 't', 'data' => ['subscription_id' => 's', 'external_customer_id' => 'ext1', 'product_id' => 'p', 'entitlement_ids' => ['pro'], 'grace_period_expiration_at' => 'g']]);
         $this->assertSame('g', $issue->getSubscriptionData()?->gracePeriodExpirationAt);
+        $this->assertSame('ext1', $issue->getSubscriptionData()?->externalCustomerId);
         $this->assertSame(['pro'], $issue->getSubscriptionData()->entitlementIds);
     }
 
