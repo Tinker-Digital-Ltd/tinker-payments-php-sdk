@@ -242,19 +242,40 @@ Quarantine items with `reconciliation_reason` and verify every page before commi
 
 ## Customer access
 
-Read what a customer may use, keyed by your own customer ID. Unknown customers or keys return `active: false` from `getEntitlement`; `getCustomer` throws an `ApiException` (`CUSTOMER_NOT_FOUND`) for an unknown customer.
+Read what a customer may use, keyed by your own customer ID. `getCustomer` throws an `ApiException` (`CUSTOMER_NOT_FOUND`) for an unknown customer.
 
 ```php
-$tinker->subscriptions()->setPlanEntitlements('plan-id', ['pro', 'export']);
 $customers = $tinker->customers();
 $pro = $customers->getEntitlement('workspace-123', 'pro');
-if ($pro['active']) {
-    // grant access until $pro['expires_at']
+if ($pro['is_active']) {
+    // grant access until $pro['expiration_date']
 }
-$customer = $customers->getCustomer('workspace-123'); // entitlements and subscriptions
+$customer = $customers->getCustomer('workspace-123'); // entitlements.active, entitlements.all, ...
+
+$customers->grantPromotionalEntitlement('workspace-123', 'pro', ['duration' => 'P1W']);
+$customers->revokePromotionalEntitlements('workspace-123', 'pro');
+$customers->alias('workspace-123', 'anon-456');
+$customers->transfer('anon-456', 'workspace-123');
+$customers->setAttributes('workspace-123', ['$email' => 'jane@example.com']);
+$customers->getOfferings('workspace-123');
+$token = $customers->createToken('workspace-123', 3600); // token, public_key, expires_at
 ```
 
-Pass `entitlements: ['pro']` to `ManagedCheckout` to grant keys from a managed checkout.
+Catalogue and reporting:
+
+```php
+$pro = $tinker->entitlements()->create(['identifier' => 'pro', 'display_name' => 'Pro']);
+$tinker->entitlements()->attachProducts($pro['id'], [$productId]); // also detachProducts, list, get, update, delete
+$tinker->products()->create(['name' => 'Credit pack', 'price' => 5, 'currency' => 'USD', 'access_period' => 'P30D']); // list, get, update
+$tinker->offerings()->create(['identifier' => 'default', 'is_current' => true, 'packages' => [['identifier' => 'monthly', 'product_id' => $productId]]]); // list, get, update, delete
+$tinker->experiments()->create(['name' => 'Price test', 'control_offering_id' => $a, 'treatment_offering_id' => $b]); // list, get, stop
+$tinker->integrations()->put('slack', ['secret' => $webhookUrl, 'enabled' => true]); // list, delete, test
+$tinker->metrics()->get('2026-01-01', '2026-01-31'); // both dates optional
+$tinker->subscriptions()->listRenewalPrompts($subscriptionId);
+$tinker->subscriptions()->sendRenewalPrompt($subscriptionId);
+```
+
+`InitiatePaymentRequest` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`.
 
 ## Refunds, merchant payouts and checkout cancellation
 

@@ -16,6 +16,13 @@ final class SubscriptionEventData
     public readonly string|null $cancelledAt;
     public readonly string|null $pausedAt;
     public readonly string|null $reactivatedAt;
+    public readonly string $productId;
+    /** @var list<string> */
+    public readonly array $entitlementIds;
+    public readonly string|null $store;
+    public readonly string $periodType;
+    public readonly string|null $expirationAt;
+    public readonly string|null $gracePeriodExpirationAt;
 
     /**
      * @param array<string, mixed> $data
@@ -32,6 +39,12 @@ final class SubscriptionEventData
         $this->cancelledAt = $data['cancelled_at'] ?? null;
         $this->pausedAt = $data['paused_at'] ?? null;
         $this->reactivatedAt = $data['reactivated_at'] ?? null;
+        $this->productId = (string) ($data['product_id'] ?? '');
+        $this->entitlementIds = array_values(array_map(strval(...), (array) ($data['entitlement_ids'] ?? [])));
+        $this->store = $data['store'] ?? null;
+        $this->periodType = (string) ($data['period_type'] ?? '');
+        $this->expirationAt = $data['expiration_at'] ?? null;
+        $this->gracePeriodExpirationAt = $data['grace_period_expiration_at'] ?? null;
     }
 
     /**
@@ -51,6 +64,12 @@ final class SubscriptionEventData
             'cancelled_at' => $this->cancelledAt,
             'paused_at' => $this->pausedAt,
             'reactivated_at' => $this->reactivatedAt,
+            'product_id' => $this->productId,
+            'entitlement_ids' => $this->entitlementIds,
+            'store' => $this->store,
+            'period_type' => $this->periodType,
+            'expiration_at' => $this->expirationAt,
+            'grace_period_expiration_at' => $this->gracePeriodExpirationAt,
         ];
     }
 }

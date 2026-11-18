@@ -7,7 +7,13 @@ namespace Tinker;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Tinker\Api\CustomerManager;
+use Tinker\Api\EntitlementManager;
+use Tinker\Api\ExperimentManager;
+use Tinker\Api\IntegrationManager;
+use Tinker\Api\MetricsManager;
+use Tinker\Api\OfferingManager;
 use Tinker\Api\PayoutManager;
+use Tinker\Api\ProductManager;
 use Tinker\Api\SubscriptionManager;
 use Tinker\Api\TransactionManager;
 use Tinker\Auth\AuthenticationManager;
@@ -27,6 +33,12 @@ class TinkerPayments
     private TransactionManager|null $transactions = null;
     private SubscriptionManager|null $subscriptions = null;
     private CustomerManager|null $customers = null;
+    private ProductManager|null $products = null;
+    private OfferingManager|null $offerings = null;
+    private MetricsManager|null $metrics = null;
+    private IntegrationManager|null $integrations = null;
+    private ExperimentManager|null $experiments = null;
+    private EntitlementManager|null $entitlements = null;
     private WebhookHandler|null $webhooks = null;
 
     public function __construct(
@@ -79,6 +91,66 @@ class TinkerPayments
     public function customers(): CustomerManager
     {
         return $this->customers ??= new CustomerManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function entitlements(): EntitlementManager
+    {
+        return $this->entitlements ??= new EntitlementManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function experiments(): ExperimentManager
+    {
+        return $this->experiments ??= new ExperimentManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function integrations(): IntegrationManager
+    {
+        return $this->integrations ??= new IntegrationManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function metrics(): MetricsManager
+    {
+        return $this->metrics ??= new MetricsManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function offerings(): OfferingManager
+    {
+        return $this->offerings ??= new OfferingManager(
+            $this->config,
+            $this->httpClient,
+            $this->requestFactory,
+            $this->authManager,
+        );
+    }
+
+    public function products(): ProductManager
+    {
+        return $this->products ??= new ProductManager(
             $this->config,
             $this->httpClient,
             $this->requestFactory,

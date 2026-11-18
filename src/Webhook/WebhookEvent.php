@@ -9,6 +9,8 @@ use Tinker\Exception\InvalidPayloadException;
 use Tinker\Model\CheckoutCancellation;
 use Tinker\Model\Payout;
 use Tinker\Model\Refund;
+use Tinker\Webhook\DTO\CustomerEventData;
+use Tinker\Webhook\DTO\EntitlementEventData;
 use Tinker\Webhook\DTO\InvoiceEventData;
 use Tinker\Webhook\DTO\OnboardingEventData;
 use Tinker\Webhook\DTO\PaymentEventData;
@@ -21,7 +23,7 @@ final class WebhookEvent
     public readonly string $type;
     public readonly string $source;
     public readonly string $timestamp;
-    public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CheckoutCancellation|Refund|Payout $data;
+    public readonly PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CustomerEventData|EntitlementEventData|CheckoutCancellation|Refund|Payout $data;
     public readonly WebhookMeta $meta;
     public readonly WebhookSecurity $security;
     /** @var array<string, mixed> */
@@ -52,8 +54,12 @@ final class WebhookEvent
     /**
      * @param array<string, mixed> $data
      */
-    private function createEventData(array $data, string $source): PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CheckoutCancellation|Refund|Payout
+    private function createEventData(array $data, string $source): PaymentEventData|SubscriptionEventData|InvoiceEventData|SettlementEventData|OnboardingEventData|CustomerEventData|EntitlementEventData|CheckoutCancellation|Refund|Payout
     {
+        if ('entitlement' === $source || ('payment' === $source && 'purchase.completed' === $this->type)) {
+            return new EntitlementEventData($data);
+        }
+
         if ('payment' === $source) {
             $resource = is_array($data['resource'] ?? null) ? $data['resource'] : [];
             $lifecycle = match (true) {
@@ -73,6 +79,7 @@ final class WebhookEvent
             'subscription' => new SubscriptionEventData($data),
             'invoice' => new InvoiceEventData($data),
             'settlement' => new SettlementEventData($data),
+            'customer' => new CustomerEventData($data),
             default => throw new InvalidPayloadException("Unknown webhook source: {$source}", ExceptionCode::INVALID_PAYLOAD),
         };
     }
@@ -146,6 +153,16 @@ final class WebhookEvent
     public function getSettlementData(): SettlementEventData|null
     {
         return $this->data instanceof SettlementEventData ? $this->data : null;
+    }
+
+    public function getCustomerData(): CustomerEventData|null
+    {
+        return $this->data instanceof CustomerEventData ? $this->data : null;
+    }
+
+    public function getEntitlementData(): EntitlementEventData|null
+    {
+        return $this->data instanceof EntitlementEventData ? $this->data : null;
     }
 
     public function toTransaction(): \Tinker\Model\Transaction|null

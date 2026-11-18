@@ -72,32 +72,6 @@ class SubscriptionManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
-    public function getPlanEntitlements(string $planId): array
-    {
-        return $this->request('GET', Endpoints::SUBSCRIPTION_PLANS_PATH.'/'.rawurlencode($planId).'/entitlements');
-    }
-
-    /**
-     * @param list<string> $keys
-     *
-     * @return array<string, mixed>
-     *
-     * @throws NetworkException
-     * @throws ApiException
-     * @throws ClientExceptionInterface
-     */
-    public function setPlanEntitlements(string $planId, array $keys): array
-    {
-        return $this->request('PUT', Endpoints::SUBSCRIPTION_PLANS_PATH.'/'.rawurlencode($planId).'/entitlements', ['keys' => $keys]);
-    }
-
-    /**
-     * @return array<string, mixed>
-     *
-     * @throws NetworkException
-     * @throws ApiException
-     * @throws ClientExceptionInterface
-     */
     public function listInvoices(string|null $subscriptionId = null, int|null $page = null, int|null $pageSize = null): array
     {
         $query = http_build_query(array_filter(
@@ -251,5 +225,34 @@ class SubscriptionManager extends BaseManager
     private function billingResourcePath(string $id): string
     {
         return 'merchant/billing/resources/'.rawurlencode($id);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
+    public function listRenewalPrompts(string|null $subscriptionId = null): array
+    {
+        $query = null === $subscriptionId || '' === $subscriptionId ? '' : '?'.http_build_query(['subscription_id' => $subscriptionId]);
+
+        /** @var array<int, array<string, mixed>> $result */
+        $result = $this->request('GET', Endpoints::SUBSCRIPTION_BASE_PATH.'/renewal_prompts'.$query);
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
+    public function sendRenewalPrompt(string $subscriptionId): array
+    {
+        return $this->request('POST', Endpoints::SUBSCRIPTION_BASE_PATH.'/'.rawurlencode($subscriptionId).'/renewal_prompt');
     }
 }

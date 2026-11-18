@@ -24,6 +24,9 @@ final class InitiatePaymentRequest
         public readonly string|null $paymentMethod = null,
         public readonly string|null $customerName = null,
         public readonly string|null $country = null,
+        public readonly string|null $productId = null,
+        public readonly string|null $externalCustomerId = null,
+        public readonly string|null $presentedOfferingId = null,
     ) {
     }
 
@@ -68,6 +71,12 @@ final class InitiatePaymentRequest
 
         if (null !== $this->paymentMethod) {
             $payload['paymentMethod'] = $this->paymentMethod;
+        }
+
+        foreach (['productId' => $this->productId, 'externalCustomerId' => $this->externalCustomerId, 'presentedOfferingId' => $this->presentedOfferingId] as $name => $value) {
+            if (null !== $value) {
+                $payload[$name] = $value;
+            }
         }
 
         return $payload;
