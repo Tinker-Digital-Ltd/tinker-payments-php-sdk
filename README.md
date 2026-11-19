@@ -252,13 +252,13 @@ if ($pro['is_active']) {
 }
 $customer = $customers->getCustomer('workspace-123'); // entitlements.active, entitlements.all, ...
 
-$customers->grantPromotionalEntitlement('workspace-123', 'pro', ['duration' => 'P1W']);
+$customers->grantPromotionalEntitlement('workspace-123', 'pro', ['duration' => 'P1W']);  // or ['end_time' => RFC3339], mutually exclusive with duration
 $customers->revokePromotionalEntitlements('workspace-123', 'pro');
 $customers->alias('workspace-123', 'anon-456');
 $customers->transfer('anon-456', 'workspace-123');
 $customers->setAttributes('workspace-123', ['$email' => 'jane@example.com']);
 $customers->getOfferings('workspace-123');
-$token = $customers->createToken('workspace-123', 3600); // token, public_key, expires_at
+$token = $customers->createToken('workspace-123', 3600); // token, public_key, expires_at; the app needs a public key first: new apps get one automatically, otherwise 409 PUBLIC_KEY_REQUIRED
 ```
 
 Catalogue and reporting:

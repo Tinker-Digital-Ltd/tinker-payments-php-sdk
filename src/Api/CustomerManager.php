@@ -30,13 +30,13 @@ final class CustomerManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
-    public function getEntitlement(string $externalCustomerId, string $key): array
+    public function getEntitlement(string $externalCustomerId, string $identifier): array
     {
-        return $this->request('GET', $this->entitlementPath($externalCustomerId, $key));
+        return $this->request('GET', $this->entitlementPath($externalCustomerId, $identifier));
     }
 
     /**
-     * @param array<string, mixed> $grant `duration` or `end_time`
+     * @param array<string, mixed> $grant `duration` or `end_time` (RFC3339), mutually exclusive
      *
      * @return array<string, mixed>
      *
@@ -44,9 +44,9 @@ final class CustomerManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
-    public function grantPromotionalEntitlement(string $externalCustomerId, string $key, array $grant = []): array
+    public function grantPromotionalEntitlement(string $externalCustomerId, string $identifier, array $grant = []): array
     {
-        return $this->request('POST', $this->entitlementPath($externalCustomerId, $key).'/promotional', $grant);
+        return $this->request('POST', $this->entitlementPath($externalCustomerId, $identifier).'/promotional', $grant);
     }
 
     /**
@@ -56,9 +56,9 @@ final class CustomerManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
-    public function revokePromotionalEntitlements(string $externalCustomerId, string $key): array
+    public function revokePromotionalEntitlements(string $externalCustomerId, string $identifier): array
     {
-        return $this->request('POST', $this->entitlementPath($externalCustomerId, $key).'/revoke_promotionals');
+        return $this->request('POST', $this->entitlementPath($externalCustomerId, $identifier).'/revoke_promotionals');
     }
 
     /**
@@ -128,8 +128,8 @@ final class CustomerManager extends BaseManager
         return Endpoints::CUSTOMERS_PATH.'/'.rawurlencode($externalCustomerId);
     }
 
-    private function entitlementPath(string $externalCustomerId, string $key): string
+    private function entitlementPath(string $externalCustomerId, string $identifier): string
     {
-        return $this->customerPath($externalCustomerId).'/entitlements/'.rawurlencode($key);
+        return $this->customerPath($externalCustomerId).'/entitlements/'.rawurlencode($identifier);
     }
 }
