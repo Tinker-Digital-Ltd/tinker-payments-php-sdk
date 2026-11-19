@@ -242,23 +242,23 @@ Quarantine items with `reconciliation_reason` and verify every page before commi
 
 ## Customer access
 
-Read what a customer may use, keyed by your own customer ID. `getCustomer` throws an `ApiException` (`CUSTOMER_NOT_FOUND`) for an unknown customer.
+Server-side access for one-time products and subscriptions, keyed by your own customer ID. An unknown customer throws an `ApiException` (`CUSTOMER_NOT_FOUND`). Responses are unwrapped data arrays.
 
 ```php
 $customers = $tinker->customers();
-$pro = $customers->getEntitlement('workspace-123', 'pro');
+$customer = $customers->getCustomer('cust_123'); // entitlements.active, entitlements.all, ...
+$pro = $customers->getEntitlement('cust_123', 'pro');
 if ($pro['is_active']) {
     // grant access until $pro['expiration_date']
 }
-$customer = $customers->getCustomer('workspace-123'); // entitlements.active, entitlements.all, ...
 
-$customers->grantPromotionalEntitlement('workspace-123', 'pro', ['duration' => 'P1W']);  // or ['end_time' => RFC3339], mutually exclusive with duration
-$customers->revokePromotionalEntitlements('workspace-123', 'pro');
-$customers->alias('workspace-123', 'anon-456');
-$customers->transfer('anon-456', 'workspace-123');
-$customers->setAttributes('workspace-123', ['$email' => 'jane@example.com']);
-$customers->getOfferings('workspace-123');
-$token = $customers->createToken('workspace-123', 3600); // token, public_key, expires_at; the app needs a public key first: new apps get one automatically, otherwise 409 PUBLIC_KEY_REQUIRED
+$customers->grantPromotionalEntitlement('cust_123', 'pro', ['duration' => 'P1W']); // or ['end_time' => RFC3339], not both; neither grants access until revoked
+$customers->revokePromotionalEntitlements('cust_123', 'pro');
+$customers->alias('cust_123', 'anon_456');
+$customers->transfer('anon_456', 'cust_123');
+$customers->setAttributes('cust_123', ['$email' => 'jane@example.com']); // null removes an attribute
+$offerings = $customers->getOfferings('cust_123'); // current_offering_identifier, experiment, offerings
+$token = $customers->createToken('cust_123', 3600); // token, public_key, expires_at; 60 to 86400 seconds, default 3600; the app needs a public key first: new apps get one automatically, otherwise 409 PUBLIC_KEY_REQUIRED
 ```
 
 Catalogue and reporting:
@@ -269,15 +269,16 @@ $tinker->entitlements()->attachProducts($pro['id'], [$productId]); // also detac
 $tinker->products()->create(['name' => 'Credit pack', 'price' => 5, 'currency' => 'USD', 'access_period' => 'P30D']); // list, get, update
 $tinker->offerings()->create(['identifier' => 'default', 'is_current' => true, 'packages' => [['identifier' => 'monthly', 'product_id' => $productId]]]); // list, get, update, delete
 $tinker->experiments()->create(['name' => 'Price test', 'control_offering_id' => $a, 'treatment_offering_id' => $b]); // list, get, stop
-$tinker->integrations()->put('slack', ['secret' => $webhookUrl, 'enabled' => true]); // list, delete, test
+$tinker->integrations()->put('slack', ['secret' => $webhookUrl, 'enabled' => true]); // list, delete, test (kind: slack, segment, mixpanel)
 $tinker->metrics()->get('2026-01-01', '2026-01-31'); // both dates optional
-$tinker->subscriptions()->listRenewalPrompts($subscriptionId);
-$tinker->subscriptions()->sendRenewalPrompt($subscriptionId);
+$tinker->subscriptions()->listInvoices('sub_123', 1, 25); // all arguments optional; returns items, total, page, page_size
+$tinker->subscriptions()->listRenewalPrompts('sub_123', 1, 25); // same paging and result shape
+$tinker->subscriptions()->sendRenewalPrompt('sub_123');
 ```
 
 `InitiatePaymentRequest` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`.
 
-## Refunds, merchant payouts and checkout cancellation
+## Refunds, wallet withdrawals and checkout cancellation
 
 A payout is a withdrawal from the merchant's available Tinker wallet balance to
 an existing verified payout account. The app owner must enable withdrawal access

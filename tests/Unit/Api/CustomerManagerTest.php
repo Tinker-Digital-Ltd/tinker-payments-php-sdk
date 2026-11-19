@@ -103,6 +103,7 @@ final class CustomerManagerTest extends TestCase
         yield 'metrics' => [static fn (\Closure $t) => $t(MetricsManager::class)->get('2026-01-01', '2026-01-31'), 'GET', $m.'/metrics?from=2026-01-01&to=2026-01-31', null];
         yield 'metrics unbounded' => [static fn (\Closure $t) => $t(MetricsManager::class)->get(), 'GET', $m.'/metrics', null];
         yield 'renewal prompts' => [static fn (\Closure $t) => $t(SubscriptionManager::class)->listRenewalPrompts('s1'), 'GET', $m.'/subscriptions/renewal_prompts?subscription_id=s1', null];
+        yield 'renewal prompts paged' => [static fn (\Closure $t) => $t(SubscriptionManager::class)->listRenewalPrompts('s1', 2, 50), 'GET', $m.'/subscriptions/renewal_prompts?subscription_id=s1&page=2&page_size=50', null];
         yield 'send renewal prompt' => [static fn (\Closure $t) => $t(SubscriptionManager::class)->sendRenewalPrompt('s1'), 'POST', $m.'/subscriptions/s1/renewal_prompt', null];
     }
 

@@ -228,20 +228,20 @@ class SubscriptionManager extends BaseManager
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<string, mixed>
      *
      * @throws NetworkException
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
-    public function listRenewalPrompts(string|null $subscriptionId = null): array
+    public function listRenewalPrompts(string|null $subscriptionId = null, int|null $page = null, int|null $pageSize = null): array
     {
-        $query = null === $subscriptionId || '' === $subscriptionId ? '' : '?'.http_build_query(['subscription_id' => $subscriptionId]);
+        $query = http_build_query(array_filter(
+            ['subscription_id' => $subscriptionId, 'page' => $page, 'page_size' => $pageSize],
+            static fn (mixed $value): bool => null !== $value && '' !== $value,
+        ));
 
-        /** @var array<int, array<string, mixed>> $result */
-        $result = $this->request('GET', Endpoints::SUBSCRIPTION_BASE_PATH.'/renewal_prompts'.$query);
-
-        return $result;
+        return $this->request('GET', Endpoints::SUBSCRIPTION_BASE_PATH.'/renewal_prompts'.('' === $query ? '' : '?'.$query));
     }
 
     /**
