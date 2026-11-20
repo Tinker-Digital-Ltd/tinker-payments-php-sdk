@@ -20,6 +20,8 @@ final class EntitlementEventData
     public readonly string|null $expirationAt;
     public readonly string|null $presentedOfferingId;
     public readonly string|null $revokedAt;
+    public readonly string|null $environment;
+    public readonly string|null $originalTransactionId;
 
     /**
      * @param array<string, mixed> $data
@@ -39,6 +41,8 @@ final class EntitlementEventData
         $this->expirationAt = $data['expiration_at'] ?? null;
         $this->presentedOfferingId = $data['presented_offering_id'] ?? null;
         $this->revokedAt = $data['revoked_at'] ?? null;
+        $this->environment = $data['environment'] ?? null;
+        $this->originalTransactionId = $data['original_transaction_id'] ?? null;
     }
 
     /**
@@ -60,6 +64,8 @@ final class EntitlementEventData
             'expiration_at' => $this->expirationAt,
             'presented_offering_id' => $this->presentedOfferingId,
             'revoked_at' => $this->revokedAt,
+            'environment' => $this->environment,
+            'original_transaction_id' => $this->originalTransactionId,
         ];
     }
 }

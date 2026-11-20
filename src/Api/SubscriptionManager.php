@@ -134,6 +134,19 @@ class SubscriptionManager extends BaseManager
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ClientExceptionInterface
+     */
+    public function uncancel(string $subscriptionId): array
+    {
+        return $this->request(
+            'POST',
+            Endpoints::SUBSCRIPTION_BASE_PATH.'/'.urlencode($subscriptionId).'/uncancel',
+        );
+    }
+
     /** @return array<string, mixed> */
     public function checkout(ManagedCheckout $request): array
     {

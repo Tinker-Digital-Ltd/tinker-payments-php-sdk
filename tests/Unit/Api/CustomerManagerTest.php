@@ -151,6 +151,11 @@ final class CustomerManagerTest extends TestCase
         $this->assertSame('g', $issue->getSubscriptionData()?->gracePeriodExpirationAt);
         $this->assertSame('ext1', $issue->getSubscriptionData()?->externalCustomerId);
         $this->assertSame(['pro'], $issue->getSubscriptionData()->entitlementIds);
+
+        $changed = new WebhookEvent(['id' => '5', 'type' => 'subscription.product_changed', 'source' => 'subscription', 'timestamp' => 't', 'data' => ['subscription_id' => 's', 'product_id' => 'p2', 'previous_product_id' => 'p1', 'previous_expiration_at' => 'x', 'cancel_reason' => 'UNKNOWN', 'environment' => 'SANDBOX', 'presented_offering_id' => 'o', 'transaction_id' => 't1', 'original_transaction_id' => 't0']]);
+        $data = $changed->getSubscriptionData();
+        $this->assertSame(['p2', 'p1', 'x', 'UNKNOWN', null, 'SANDBOX', 'o', 't1', 't0'], [$data->productId, $data->previousProductId, $data->previousExpirationAt, $data->cancelReason, $data->expirationReason, $data->environment, $data->presentedOfferingId, $data->transactionId, $data->originalTransactionId]);
+        $this->assertNull($purchase->getEntitlementData()?->environment);
     }
 
     private function expectRequest(string $method, string $path): void

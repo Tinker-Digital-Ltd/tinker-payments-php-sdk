@@ -153,6 +153,7 @@ $plans->updatePlan($plan['id'], new CreateSubscriptionPlanRequest(
 $invoices = $plans->listInvoices($subscription['subscription_id'], page: 1, pageSize: 25); // all arguments optional
 $plans->deletePlan($plan['id']);
 $plans->cancel($subscription['subscription_id']);
+$plans->uncancel($subscription['subscription_id']); // undo a cancellation scheduled for the period end; 409 SUBSCRIPTION_ENDED, SUBSCRIPTION_NOT_SCHEDULED_TO_CANCEL or UNCANCEL_NOT_SUPPORTED
 ```
 
 ## Managed recurring billing
@@ -277,7 +278,7 @@ $tinker->subscriptions()->listRenewalPrompts('sub_123', 1, 25); // same paging a
 $tinker->subscriptions()->sendRenewalPrompt('sub_123');
 ```
 
-`InitiatePaymentRequest` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`.
+`InitiatePaymentRequest` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `subscription.uncancelled`, `subscription.product_changed`, `subscription.extended`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`.
 
 ## Refunds, wallet withdrawals and checkout cancellation
 

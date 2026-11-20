@@ -24,6 +24,14 @@ final class SubscriptionEventData
     public readonly string $periodType;
     public readonly string|null $expirationAt;
     public readonly string|null $gracePeriodExpirationAt;
+    public readonly string|null $cancelReason;
+    public readonly string|null $expirationReason;
+    public readonly string|null $environment;
+    public readonly string|null $presentedOfferingId;
+    public readonly string|null $transactionId;
+    public readonly string|null $originalTransactionId;
+    public readonly string|null $previousProductId;
+    public readonly string|null $previousExpirationAt;
 
     /**
      * @param array<string, mixed> $data
@@ -47,6 +55,14 @@ final class SubscriptionEventData
         $this->periodType = (string) ($data['period_type'] ?? '');
         $this->expirationAt = $data['expiration_at'] ?? null;
         $this->gracePeriodExpirationAt = $data['grace_period_expiration_at'] ?? null;
+        $this->cancelReason = $data['cancel_reason'] ?? null;
+        $this->expirationReason = $data['expiration_reason'] ?? null;
+        $this->environment = $data['environment'] ?? null;
+        $this->presentedOfferingId = $data['presented_offering_id'] ?? null;
+        $this->transactionId = $data['transaction_id'] ?? null;
+        $this->originalTransactionId = $data['original_transaction_id'] ?? null;
+        $this->previousProductId = $data['previous_product_id'] ?? null;
+        $this->previousExpirationAt = $data['previous_expiration_at'] ?? null;
     }
 
     /**
@@ -73,6 +89,14 @@ final class SubscriptionEventData
             'period_type' => $this->periodType,
             'expiration_at' => $this->expirationAt,
             'grace_period_expiration_at' => $this->gracePeriodExpirationAt,
+            'cancel_reason' => $this->cancelReason,
+            'expiration_reason' => $this->expirationReason,
+            'environment' => $this->environment,
+            'presented_offering_id' => $this->presentedOfferingId,
+            'transaction_id' => $this->transactionId,
+            'original_transaction_id' => $this->originalTransactionId,
+            'previous_product_id' => $this->previousProductId,
+            'previous_expiration_at' => $this->previousExpirationAt,
         ];
     }
 }

@@ -161,6 +161,29 @@ final class SubscriptionManagerTest extends TestCase
         $this->assertSame('Subscription cancelled successfully', $result['message']);
     }
 
+    public function testUncancelSubscriptionReturnsMessage(): void
+    {
+        $request = $this->mockRequest();
+        $response = $this->mockResponse([
+            'success' => true,
+            'data' => [
+                'message' => 'Subscription cancellation undone',
+            ],
+        ]);
+
+        $this->requestFactory
+            ->expects($this->once())
+            ->method('createRequest')
+            ->with('POST', $this->stringContains('/merchant/subscriptions/sub_456/uncancel'))
+            ->willReturn($request);
+
+        $this->httpClient->method('sendRequest')->willReturn($response);
+
+        $result = $this->subscriptionManager->uncancel('sub_456');
+
+        $this->assertSame('Subscription cancellation undone', $result['message']);
+    }
+
     private function mockRequest(): RequestInterface&MockObject
     {
         $request = $this->createMock(RequestInterface::class);
