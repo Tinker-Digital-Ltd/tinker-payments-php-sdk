@@ -18,6 +18,23 @@ final class CustomerManager extends BaseManager
      * @throws ApiException
      * @throws ClientExceptionInterface
      */
+    public function listCustomers(string|null $search = null, int|null $page = null, int|null $pageSize = null): array
+    {
+        $query = http_build_query(array_filter(
+            ['search' => $search, 'page' => $page, 'page_size' => $pageSize],
+            static fn (mixed $value): bool => null !== $value && '' !== $value,
+        ));
+
+        return $this->request('GET', Endpoints::CUSTOMERS_PATH.('' === $query ? '' : '?'.$query));
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws NetworkException
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     */
     public function getCustomer(string $externalCustomerId): array
     {
         return $this->request('GET', $this->customerPath($externalCustomerId));

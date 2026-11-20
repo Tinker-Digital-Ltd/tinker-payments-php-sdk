@@ -246,6 +246,7 @@ Server-side access for one-time products and subscriptions, keyed by your own cu
 
 ```php
 $customers = $tinker->customers();
+$page = $customers->listCustomers('cust', 1, 50); // search is a prefix of the customer ID or email; all arguments optional, at most 50 per page; returns items, total, page, page_size
 $customer = $customers->getCustomer('cust_123'); // entitlements.active, entitlements.all, ...
 $pro = $customers->getEntitlement('cust_123', 'pro');
 if ($pro['is_active']) {
@@ -268,7 +269,7 @@ $pro = $tinker->entitlements()->create(['identifier' => 'pro', 'display_name' =>
 $tinker->entitlements()->attachProducts($pro['id'], [$productId]); // also detachProducts, list, get, update, delete
 $tinker->products()->create(['name' => 'Credit pack', 'price' => 5, 'currency' => 'USD', 'access_period' => 'P30D']); // list, get, update
 $tinker->offerings()->create(['identifier' => 'default', 'is_current' => true, 'packages' => [['identifier' => 'monthly', 'product_id' => $productId]]]); // list, get, update, delete
-$tinker->experiments()->create(['name' => 'Price test', 'control_offering_id' => $a, 'treatment_offering_id' => $b]); // list, get, stop
+$tinker->experiments()->create(['name' => 'Price test', 'control_offering_id' => $a, 'treatment_offering_id' => $b]); // list, get, stop; an experiment's offering IDs are null once the offering is deleted, and results include revenue_by_currency per variant
 $tinker->integrations()->put('slack', ['secret' => $webhookUrl, 'enabled' => true]); // list, delete, test (kind: slack, segment, mixpanel)
 $tinker->metrics()->get('2026-01-01', '2026-01-31'); // both dates optional
 $tinker->subscriptions()->listInvoices('sub_123', 1, 25); // all arguments optional; returns items, total, page, page_size
